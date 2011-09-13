@@ -2,28 +2,34 @@
 
 	$(document).ready(function(){
 
-		function fieldChangeHandler(event, element)
+		function fieldChangeHandler( e )
 		{
 			var
-			$element	= $(element),
+			$element	= $(this),
 			value;
 
 			element		= $element.get(0);
 
-			if ( $element.attr('contentEditable') === 'true' )
+			if ( $element.attr('contentEditable') &&
+			 	 $element.attr('contentEditable') !== 'false' )
 			{
 				value = $element.html();
 			}
-			value = $element.val();
-
-			if ( value && element.previousValue != value )
+			else if ( $element.is('input,textarea') )
 			{
-				$element.trigger("field:change");
+				value = $element.val();
+			}
+
+			if ( value &&
+				 element.previousValue != value )
+			{
+				$element.trigger('field:change');
 				element.previousValue = value;
 			}
 		}
 
-		$('input,textarea,*[contenteditable=""],*[contenteditable=true]').keyup(fieldChangeHandler);
+		$('body').delegate('input,textarea,*[contenteditable=""],*[contenteditable=true]', 'keyup', fieldChangeHandler );
+		
 	});
 	
 })(jQuery);
