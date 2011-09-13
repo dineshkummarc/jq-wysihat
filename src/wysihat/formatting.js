@@ -189,7 +189,7 @@ WysiHat.Formatting = (function() {
         if (mode != EXPECTING_LIST_ITEM) {
           if (!line) line = lineContainer = createLine();
           previousAccumulation = node;
-          lineContainer.appendChild(node);
+          lineContainer.append(node);
         }
       }
 
@@ -200,8 +200,8 @@ WysiHat.Formatting = (function() {
       }
 
       function flush() {
-        if (line && line.childNodes.length) {
-          container.appendChild(line);
+        if (line && line.get(0).childNodes.length) {
+          container.append(line);
           line = lineContainer = null;
         }
       }
@@ -223,7 +223,7 @@ WysiHat.Formatting = (function() {
       result = container = $("<div></div>");
       walk(element.childNodes);
       flush();
-      return result.innerHTML;
+      return result.html();
     }
   };
 })();

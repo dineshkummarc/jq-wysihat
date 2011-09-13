@@ -24,7 +24,7 @@ WysiHat.Editor = {
     $textarea.before($editArea);
     $textarea.hide();
 
-    // WysiHat.BrowserFeatures.run()
+    WysiHat.BrowserFeatures.run()
 
     return $editArea;
   }
