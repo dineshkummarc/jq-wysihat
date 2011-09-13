@@ -1,6 +1,9 @@
-WysiHat.BrowserFeatures = (function(){
+WysiHat.BrowserFeatures = (function($){
 	
-	function createTmpIframe(callback) {
+	var features = {};
+
+	function createTmpIframe(callback)
+	{
 	    var
 		frameDocument,
 	    $frame	= $('<iframe></iframe>'),
@@ -28,9 +31,7 @@ WysiHat.BrowserFeatures = (function(){
 	    $('body').append($frame);
 	}
 
-  	var features = {};
-
-	function detectParagraphType(document)
+  	function detectParagraphType(document)
 	{
 	    var tagName;
 
@@ -86,4 +87,4 @@ WysiHat.BrowserFeatures = (function(){
 
 	return features;
 	
-})();
+})(jQuery);

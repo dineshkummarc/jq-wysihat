@@ -1,229 +1,299 @@
-WysiHat.Formatting = (function() {
-  var ACCUMULATING_LINE      = {};
-  var EXPECTING_LIST_ITEM    = {};
-  var ACCUMULATING_LIST_ITEM = {};
+WysiHat.Formatting = (function($){
 
-  return {
-    getBrowserMarkupFrom: function(applicationMarkup) {
-      var container = $("<div>" + applicationMarkup + "</div>");
+	var
+	ACCUMULATING_LINE      = {},
+	EXPECTING_LIST_ITEM    = {},
+	ACCUMULATING_LIST_ITEM = {};
 
-      function spanify(element, style) {
-        $(element).replaceWith(
-          '<span style="' + style +
-          '" class="Apple-style-span">' +
-          element.innerHTML + '</span>'
-        );
-      }
+	return {
+		getBrowserMarkupFrom: function( applicationMarkup ){
+			
+			var container = $("<div>" + applicationMarkup + "</div>");
 
-      function convertStrongsToSpans() {
-        container.find("strong").each(function(element) {
-          spanify(element, "font-weight: bold");
-        });
-      }
+			function spanify(element, style)
+			{
+				$(element).replaceWith(
+					'<span style="' + style + '" class="Apple-style-span">' + element.innerHTML + '</span>'
+				);
+			}
 
-      function convertEmsToSpans() {
-        container.find("em").each(function(element) {
-          spanify(element, "font-style: italic");
-        });
-      }
+			function convertStrongsToSpans()
+			{
+				container.find("strong").each( function(element){
+					spanify(element, "font-weight: bold");
+				});
+			}
 
-      function convertDivsToParagraphs() {
-        container.find("div").each(function(element) {
-          element.replaceWith("<p>" + element.innerHTML + "</p>");
-        });
-      }
+			function convertEmsToSpans()
+			{
+				container.find("em").each( function(element){
+					spanify(element, "font-style: italic");
+				});
+			}
 
-      if ($.browser.webkit || $.browser.mozilla) {
-        convertStrongsToSpans();
-        convertEmsToSpans();
-      } else if ($.browser.msie || $.browser.opera) {
-        convertDivsToParagraphs();
-      }
+			function convertDivsToParagraphs()
+			{
+				container.find("div").each( function(element){
+					element.replaceWith("<p>" + element.innerHTML + "</p>");
+				});
+			}
 
-      return container.innerHTML;
-    },
+			if ( $.browser.webkit || $.browser.mozilla )
+			{
+				convertStrongsToSpans();
+				convertEmsToSpans();
+			}
+			else if ( $.browser.msie || $.browser.opera )
+			{
+				convertDivsToParagraphs();
+			}
 
-    getApplicationMarkupFrom: function(element) {
-      var mode = ACCUMULATING_LINE, result, container, line, lineContainer, previousAccumulation;
+			return container.innerHTML;
 
-      function walk(nodes) {
-        var length = nodes.length, node, tagName, i;
+		},
 
-        for (i = 0; i < length; i++) {
-          node = nodes[i];
+		getApplicationMarkupFrom: function(element)
+		{
+			var mode = ACCUMULATING_LINE, result, container, line, lineContainer, previousAccumulation;
 
-          if (node.nodeType == Node.ELEMENT_NODE) {
-            tagName = node.tagName.toLowerCase();
-            open(tagName, node);
-            walk(node.childNodes);
-            close(tagName);
+			function walk(nodes)
+			{
+				var length = nodes.length, node, tagName, i;
 
-          } else if (node.nodeType == Node.TEXT_NODE) {
-            read(node.nodeValue);
-          }
-        }
-      }
+				for (i = 0; i < length; i++)
+				{
+					node = nodes[i];
+					if (node.nodeType == Node.ELEMENT_NODE)
+					{
+						tagName = node.tagName.toLowerCase();
+						open(tagName, node);
+						walk(node.childNodes);
+						close(tagName);
+					}
+					else if (node.nodeType == Node.TEXT_NODE)
+					{
+						read(node.nodeValue);
+					}
+				}
+			}
 
-      function open(tagName, node) {
-        if (mode == ACCUMULATING_LINE) {
-          // if it's a block-level element and the line buffer is full, flush it
-          if (isBlockElement(tagName)) {
-            if (isEmptyParagraph(node)) {
-              accumulate($("<br />"));
-            }
+			function open(tagName, node)
+			{
+				if (mode == ACCUMULATING_LINE)
+				{
+					// if it's a block-level element and the line buffer is full, flush it
+					if (isBlockElement(tagName))
+					{
+						if (isEmptyParagraph(node))
+						{
+							accumulate($("<br />"));
+						}
 
-            flush();
+						flush();
 
-            // if it's a ul or ol, switch to expecting-list-item mode
-            if (isListElement(tagName)) {
-              container = insertList(tagName);
-              mode = EXPECTING_LIST_ITEM;
-            }
+						// if it's a ul or ol, switch to expecting-list-item mode
+						if (isListElement(tagName))
+						{
+							container = insertList(tagName);
+							mode = EXPECTING_LIST_ITEM;
+						}
+					}
+					else if (isLineBreak(tagName))
+					{
+						// if it's a br, and the previous accumulation was a br,
+						// remove the previous accumulation and flush
+						if (isLineBreak(getPreviouslyAccumulatedTagName()))
+						{
+							previousAccumulation.parentNode.removeChild(previousAccumulation);
+							flush();
+						}
 
-          } else if (isLineBreak(tagName)) {
-            // if it's a br, and the previous accumulation was a br,
-            // remove the previous accumulation and flush
-            if (isLineBreak(getPreviouslyAccumulatedTagName())) {
-              previousAccumulation.parentNode.removeChild(previousAccumulation);
-              flush();
-            }
+						// accumulate the br
+						accumulate(node.cloneNode(false));
 
-            // accumulate the br
-            accumulate(node.cloneNode(false));
+						// if it's the first br in a line, flush
+						if (!previousAccumulation.previousNode)
+						{
+							flush();
+						}
+					}
+					else
+					{
+						accumulateInlineElement(tagName, node);
+					}
 
-            // if it's the first br in a line, flush
-            if (!previousAccumulation.previousNode) flush();
+				}
+				else if (mode == EXPECTING_LIST_ITEM)
+				{
+					if (isListItemElement(tagName))
+					{
+						mode = ACCUMULATING_LIST_ITEM;
+					}
 
-          } else {
-            accumulateInlineElement(tagName, node);
-          }
+				}
+				else if (mode == ACCUMULATING_LIST_ITEM)
+				{
+					if (isLineBreak(tagName))
+					{
+						accumulate(node.cloneNode(false));
+					}
+					else if ( ! isBlockElement(tagName) )
+					{
+						accumulateInlineElement(tagName, node);
+					}
+				}
+			}
 
-        } else if (mode == EXPECTING_LIST_ITEM) {
-          if (isListItemElement(tagName)) {
-            mode = ACCUMULATING_LIST_ITEM;
-          }
+			function close(tagName)
+			{
+				if ( mode == ACCUMULATING_LINE )
+				{
+					if ( isLineElement(tagName) )
+					{
+						flush();
+					}
 
-        } else if (mode == ACCUMULATING_LIST_ITEM) {
-          if (isLineBreak(tagName)) {
-            accumulate(node.cloneNode(false));
+					if (line != lineContainer)
+					{
+						lineContainer = lineContainer.parentNode;
+					}
 
-          } else if (!isBlockElement(tagName)) {
-            accumulateInlineElement(tagName, node);
-          }
-        }
-      }
+				}
+				else if (mode == EXPECTING_LIST_ITEM)
+				{
+					if (isListElement(tagName))
+					{
+						container = result;
+						mode = ACCUMULATING_LINE;
+					}
 
-      function close(tagName) {
-        if (mode == ACCUMULATING_LINE) {
-          if (isLineElement(tagName)) {
-            flush();
-          }
+				}
+				else if (mode == ACCUMULATING_LIST_ITEM)
+				{
+					if (isListItemElement(tagName))
+					{
+						flush();
+						mode = EXPECTING_LIST_ITEM;
+					}
 
-          if (line != lineContainer) {
-            lineContainer = lineContainer.parentNode;
-          }
+					if (line != lineContainer)
+					{
+						lineContainer = lineContainer.parentNode;
+					}
+				}
+			}
 
-        } else if (mode == EXPECTING_LIST_ITEM) {
-          if (isListElement(tagName)) {
-            container = result;
-            mode = ACCUMULATING_LINE;
-          }
+			function isBlockElement(tagName)
+			{
+				return isLineElement(tagName) || isListElement(tagName);
+			}
 
-        } else if (mode == ACCUMULATING_LIST_ITEM) {
-          if (isListItemElement(tagName)) {
-            flush();
-            mode = EXPECTING_LIST_ITEM;
-          }
+			function isLineElement(tagName)
+			{
+				return tagName == "p" || tagName == "div";
+			}
 
-          if (line != lineContainer) {
-            lineContainer = lineContainer.parentNode;
-          }
-        }
-      }
+			function isListElement(tagName)
+			{
+				return tagName == "ol" || tagName == "ul";
+			}
 
-      function isBlockElement(tagName) {
-        return isLineElement(tagName) || isListElement(tagName);
-      }
+			function isListItemElement(tagName)
+			{
+				return tagName == "li";
+			}
 
-      function isLineElement(tagName) {
-        return tagName == "p" || tagName == "div";
-      }
+			function isLineBreak(tagName)
+			{
+				return tagName == "br";
+			}
 
-      function isListElement(tagName) {
-        return tagName == "ol" || tagName == "ul";
-      }
+			function isEmptyParagraph(node)
+			{
+				return node.tagName.toLowerCase() == "p" && node.childNodes.length == 0;
+			}
 
-      function isListItemElement(tagName) {
-        return tagName == "li";
-      }
+			function read(value)
+			{
+				accumulate(document.createTextNode(value));
+			}
 
-      function isLineBreak(tagName) {
-        return tagName == "br";
-      }
+			function accumulateInlineElement(tagName, node) {
 
-      function isEmptyParagraph(node) {
-        return node.tagName.toLowerCase() == "p" && node.childNodes.length == 0;
-      }
+				var element = node.cloneNode(false);
 
-      function read(value) {
-        accumulate(document.createTextNode(value));
-      }
+				if ( tagName == "span" )
+				{
+					if ( $(node).getStyle("fontWeight") == "bold" )
+					{
+						element = $("<strong></strong>");
+					}
+					else if ($(node).getStyle("fontStyle") == "italic")
+					{
+						element = $("<em></em>");
+					}
+				}
 
-      function accumulateInlineElement(tagName, node) {
-        var element = node.cloneNode(false);
+				accumulate(element);
+				lineContainer = element;
+			}
 
-        if (tagName == "span") {
-          if ($(node).getStyle("fontWeight") == "bold") {
-            element = $("<strong></strong>");
+			function accumulate(node)
+			{
+				if ( mode != EXPECTING_LIST_ITEM )
+				{
+					if ( ! line )
+					{
+						line = lineContainer = createLine();
+					}
+					previousAccumulation = node;
+					lineContainer.append(node);
+				}
+			}
 
-          } else if ($(node).getStyle("fontStyle") == "italic") {
-            element = $("<em></em>");
-          }
-        }
+			function getPreviouslyAccumulatedTagName()
+			{
+				if ( previousAccumulation &&
+					 previousAccumulation.nodeType == Node.ELEMENT_NODE )
+				{
+					return previousAccumulation.tagName.toLowerCase();
+				}
+			}
 
-        accumulate(element);
-        lineContainer = element;
-      }
+			function flush()
+			{
+				if ( line &&
+					 line.get(0).childNodes.length )
+				{
+					container.append(line);
+					line = lineContainer = null;
+				}
+			}
 
-      function accumulate(node) {
-        if (mode != EXPECTING_LIST_ITEM) {
-          if (!line) line = lineContainer = createLine();
-          previousAccumulation = node;
-          lineContainer.append(node);
-        }
-      }
+			function createLine()
+			{
+				if ( mode == ACCUMULATING_LINE )
+				{
+					return $("<div></div>");
+				}
+				else if (mode == ACCUMULATING_LIST_ITEM)
+				{
+					return $("<li></li>");
+				}
+			}
 
-      function getPreviouslyAccumulatedTagName() {
-        if (previousAccumulation && previousAccumulation.nodeType == Node.ELEMENT_NODE) {
-          return previousAccumulation.tagName.toLowerCase();
-        }
-      }
+			function insertList(tagName)
+			{
+				var list = new Element(tagName);
+				result.appendChild(list);
+				return list;
+			}
 
-      function flush() {
-        if (line && line.get(0).childNodes.length) {
-          container.append(line);
-          line = lineContainer = null;
-        }
-      }
+			result = container = $("<div></div>");
+			walk(element.childNodes);
+			flush();
+			return result.html();
+		}
+	};
 
-      function createLine() {
-        if (mode == ACCUMULATING_LINE) {
-          return $("<div></div>");
-        } else if (mode == ACCUMULATING_LIST_ITEM) {
-          return $("<li></li>");
-        }
-      }
-
-      function insertList(tagName) {
-        var list = new Element(tagName);
-        result.appendChild(list);
-        return list;
-      }
-
-      result = container = $("<div></div>");
-      walk(element.childNodes);
-      flush();
-      return result.html();
-    }
-  };
-})();
+})(jQuery);

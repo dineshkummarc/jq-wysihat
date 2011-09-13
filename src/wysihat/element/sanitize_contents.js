@@ -1,83 +1,119 @@
-(function() {
-  function cloneWithAllowedAttributes(element, allowedAttributes) {
-    var length = allowedAttributes.length, i;
-    var result = $('<' + element.tagName.toLowerCase() + '></' + element.tagName.toLowerCase() + '>')
-    element = $(element);
+(function($){
 
-    for (i = 0; i < allowedAttributes.length; i++) {
-      attribute = allowedAttributes[i];
-      if (element.attr(attribute)) {
-        result.attr(attribute, element.attr(attribute));
-      }
-    }
+	var
+	tagsToRemove	= {},
+	tagsToAllow		= {},
+	tagsToSkip		= {};
+	
+	function cloneWithAllowedAttributes( $el, allowedAttributes )
+	{
+		var
+		tagName	= $el.get(0).tagName.toLowerCase(),
+		length	= allowedAttributes.length,
+		$copy	= $('<' + tagName + '></' + tagName + '>');
+		
+		while ( lwngth-- )
+		{
+			attribute = allowedAttributes[i];
+			if ( $el.attr(attribute) )
+			{
+				$copy.attr( attribute, $el.attr(attribute) );
+			}
+		}
 
-    return result;
-  }
+		return result;
+	}
 
-  function withEachChildNodeOf(element, callback) {
-    var nodes = $(element).children;
-    var length = nodes.length, i;
-    for (i = 0; i < length; i++) callback(nodes[i]);
-  }
+	function withEachChildNodeOf( $el, callback )
+	{
+		$el.children().map(callback);
+	}
 
-  function sanitizeNode(node, tagsToRemove, tagsToAllow, tagsToSkip) {
-    var parentNode = node.parentNode;
+	function sanitizeNode( $node )
+	{
+		var
+		node	= $node.get(0),
+		tagName, $newNode;
+		
+		switch ( node.nodeType )
+		{
+			case '1':
+				tagName = node.tagName.toLowerCase();
+				if ( tagsToSkip )
+				{
+					$newNode = $node.clone(false);
+					withEachChildNodeOf( $node, function(){
+						var $child = $(this);
+						$newNode.append( $child );
+						sanitizeNode( $child );
+					});
+					$node.before($newNode);
+				}
+				else if ( tagName in tagsToAllow )
+				{
+					$newNode = cloneWithAllowedAttributes( $node, tagsToAllow[tagName] );
+					withEachChildNodeOf( $node, function(){
+						var $child = $(this);
+						$newNode.append( $child );
+						sanitizeNode( $child );
+					});
+					$node.before($newNode);
+				}
+				else if ( ! ( tagName in tagsToRemove ) )
+				{
+					withEachChildNodeOf( $node, function(){
+						var $child = $(this);
+						$node.before( $child );
+						sanitizeNode( $child );
+					});
+				}
+				break;
+			case '8':
+				$node.remove();
+				break;
+		}
+	}
 
-    switch (node.nodeType) {
-      case Node.ELEMENT_NODE:
-        var tagName = node.tagName.toLowerCase();
+	$.fn.sanitizeContents = function(options)
+	{
+		options			= options || { remove: '', allow: '', skip: [] };
+		tagsToRemove	= {};
+		tagsToAllow		= {};
+		tagsToSkip		= options.skip;
+		
+		var
+		$element = $(this),
 
-        if (tagsToSkip) {
-          var newNode = node.cloneNode(false);
-          withEachChildNodeOf(node, function(childNode) {
-            newNode.appendChild(childNode);
-            sanitizeNode(childNode, tagsToRemove, tagsToAllow, tagsToSkip);
-          });
-          parentNode.insertBefore(newNode, node);
+		tags =  ( options.remove || '' ).split( ',' );
 
-        } else if (tagName in tagsToAllow) {
-          var newNode = cloneWithAllowedAttributes(node, tagsToAllow[tagName]);
-          withEachChildNodeOf(node, function(childNode) {
-            newNode.appendChild(childNode);
-            sanitizeNode(childNode, tagsToRemove, tagsToAllow, tagsToSkip);
-          });
-          parentNode.insertBefore(newNode, node);
+		if ( tags.length > 0 &&
+			 tags[0] != '' )
+		{
+			$.each( tags, function(tagName){
+				tagsToRemove[$.trim(tagName)] = true;
+			});
+		}
+		
+		tags =  ( options.allow || '' ).split( ',' );
+		if ( tags.length > 0 &&
+			 tags[0] != '' )
+		{
+			$.each( tags, function(selector){
+				var
+				parts				= $.trim(selector).split( /[\[\]]/ ),
+				tagName 			= parts[0],
+				allowedAttributes	= $.grep( parts.slice(1), function( n, i ){
+					return ( /./ ).test(n);
+				});
+				tagsToAllow[tagName] = allowedAttributes;
+			});
+		}
 
-        } else if (!(tagName in tagsToRemove)) {
-          withEachChildNodeOf(node, function(childNode) {
-            parentNode.insertBefore(childNode, node);
-            sanitizeNode(childNode, tagsToRemove, tagsToAllow, tagsToSkip);
-          });
-        }
+		withEachChildNodeOf( $element, function(){
+			sanitizeNode( $(this) );
+		});
 
-      case Node.COMMENT_NODE:
-        parentNode.removeChild(node);
-    }
-  }
-
-  jQuery.fn.sanitizeContents = function(options) {
-    var element = $(this);
-    var tagsToRemove = {};
-    $.each((options.remove || "").split(","), function(tagName) {
-      tagsToRemove[$.trim(tagName)] = true;
-    });
-
-    var tagsToAllow = {};
-    $.each((options.allow || "").split(","), function(selector) {
-      var parts = $.trim(selector).split(/[\[\]]/);
-      var tagName = parts[0];
-      var allowedAttributes = $.grep(parts.slice(1), function(n, i) {
-        return /./.test(n);
-      });
-      tagsToAllow[tagName] = allowedAttributes;
-    });
-
-    var tagsToSkip = options.skip;
-
-    withEachChildNodeOf(element, function(childNode) {
-      sanitizeNode(childNode, tagsToRemove, tagsToAllow, tagsToSkip);
-    });
-
-    return element;
-  }
-})();
+		return $element;
+	};
+	
+})(jQuery);
