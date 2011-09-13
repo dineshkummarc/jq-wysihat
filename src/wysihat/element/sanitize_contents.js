@@ -42,36 +42,40 @@
 				if ( tagsToSkip )
 				{
 					$newNode = $node.clone(false);
-					withEachChildNodeOf( $node, function(){
-						var $child = $(this);
-						$newNode.append( $child );
-						sanitizeNode( $child );
-					});
+					sanitizeChildren( $node, $newNode );
 					$node.before($newNode);
 				}
 				else if ( tagName in tagsToAllow )
 				{
 					$newNode = cloneWithAllowedAttributes( $node, tagsToAllow[tagName] );
-					withEachChildNodeOf( $node, function(){
-						var $child = $(this);
-						$newNode.append( $child );
-						sanitizeNode( $child );
-					});
+					sanitizeChildren( $node, $newNode );
 					$node.before($newNode);
 				}
 				else if ( ! ( tagName in tagsToRemove ) )
 				{
-					withEachChildNodeOf( $node, function(){
-						var $child = $(this);
-						$node.before( $child );
-						sanitizeNode( $child );
-					});
+					sanitizeChildren( $node );
 				}
 				break;
 			case '8':
 				$node.remove();
 				break;
 		}
+	}
+	
+	function sanitizeChildren( $node, $newNode )
+	{
+		withEachChildNodeOf( $node, function(){
+			var $child = $(this);
+			if ( $newNode )
+			{
+				$newNode.append( $child );
+			}
+			else
+			{
+				$node.before( $child );
+			}
+			sanitizeNode( $child );
+		});
 	}
 
 	$.fn.sanitizeContents = function(options)
