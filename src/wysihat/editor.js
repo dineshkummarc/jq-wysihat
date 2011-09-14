@@ -16,22 +16,54 @@
 		attach: function($textarea)
 		{
 			var
-			$editArea,
-			id = ( $textarea.attr('id') != '' ? $textarea.attr('id') : this.id + this.id_i++ ) + '_editor';
-		
-			if ( $editArea == $('#' + id) )
+			t_id = $textarea.attr('id'),
+			e_id = ( t_id != '' ? $textarea.attr('id') : this.id + this.id_i++ ) + '_editor',
+			$editArea = $('#' + e_id);
+			
+			if ( t_id == '' )
 			{
+				t_id = e_id.replace('_editor');
+				$textarea.attr('id',t_id);
+			}
+		
+			if ( $editArea.length )
+			{
+				if ( ! $editArea.hasClass('editor') )
+				{
+					$editArea.addClass('editor');
+				}
 				return $editArea;
 			}
-
-			$editArea = $('<div id="' + id + '" class="editor" contentEditable="true"></div>');
-
-			$editArea.html(WysiHat.Formatting.getBrowserMarkupFrom($textarea.val()));
+			
+			$editArea = $('<div id="' + e_id + '" class="editor" contentEditable="true"></div>')
+							.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
+							
+			//console.log($editArea);
 
 			$.extend($editArea, WysiHat.Commands);
 
-			$textarea.before($editArea);
-			$textarea.hide();
+			//console.log($editArea);
+
+			$textarea
+				.bind( 'field:change', syncValues )
+				.hide()
+				.before(
+					$editArea.bind( 'field:change', syncValues )
+				 );
+				
+			function syncValues( e )
+			{
+				var $el = $(this);
+
+				if ( $el.is('div.editor') )
+				{
+					$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
+				}
+				else if ( $el.attr('id') == t_id )
+				{
+					$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
+				}
+			}
 
 			WysiHat.BrowserFeatures.run();
 

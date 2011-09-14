@@ -10,16 +10,15 @@
 
 			element		= $element.get(0);
 
-			if ( $element.attr('contentEditable') &&
-			 	 $element.attr('contentEditable') !== 'false' )
+			if ( $element.is('*[contenteditable=""],*[contenteditable=true]') )
 			{
 				value = $element.html();
 			}
-			else if ( $element.is('input,textarea') )
+			else
 			{
 				value = $element.val();
 			}
-
+			
 			if ( value &&
 				 element.previousValue != value )
 			{
