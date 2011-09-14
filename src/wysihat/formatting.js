@@ -6,35 +6,37 @@ WysiHat.Formatting = (function($){
 	ACCUMULATING_LIST_ITEM = {};
 
 	return {
-		getBrowserMarkupFrom: function( applicationMarkup ){
-			
-			var container = $("<div>" + applicationMarkup + "</div>");
+		getBrowserMarkupFrom: function( $el )
+		{
 
-			function spanify(element, style)
+			var $container = $('<div>' + $el.val() + '</div>');
+
+			function spanify( $element, style )
 			{
-				$(element).replaceWith(
-					'<span style="' + style + '" class="Apple-style-span">' + element.innerHTML + '</span>'
+				$element.replaceWith(
+					'<span style="' + style + '" class="Apple-style-span">' + $element.html() + '</span>'
 				);
 			}
 
 			function convertStrongsToSpans()
 			{
-				container.find("strong").each( function(element){
-					spanify(element, "font-weight: bold");
+				$container.find( 'strong' ).each(function(){
+					spanify( $(this), 'font-weight: bold' );
 				});
 			}
 
 			function convertEmsToSpans()
 			{
-				container.find("em").each( function(element){
-					spanify(element, "font-style: italic");
+				$container.find( 'em' ).each(function(){
+					spanify( $(this), 'font-style: italic' );
 				});
 			}
 
 			function convertDivsToParagraphs()
 			{
-				container.find("div").each( function(element){
-					element.replaceWith("<p>" + element.innerHTML + "</p>");
+				$container.find( 'div' ).each(function(){
+					var $this = $(this);
+					$this.replaceWith('<p>' + $this.html() + '</p>');
 				});
 			}
 
@@ -48,152 +50,164 @@ WysiHat.Formatting = (function($){
 				convertDivsToParagraphs();
 			}
 
-			return container.innerHTML;
+			return $container.html();
 
 		},
 
-		getApplicationMarkupFrom: function(element)
+		getApplicationMarkupFrom: function( $el )
 		{
-			var mode = ACCUMULATING_LINE, result, container, line, lineContainer, previousAccumulation;
+			var
+			mode = ACCUMULATING_LINE,
+			$result, $container,
+			$line, $lineContainer,
+			previousAccumulation;
 
-			function walk(nodes)
+			function walk( nodes )
 			{
-				var length = nodes.length, node, tagName, i;
+				var
+				editor	= $el.get(0),
+				length	= nodes.length,
+				$p		= $('<p></p>'),
+				node, $newNode, tagName, i;
 
-				for (i = 0; i < length; i++)
+		        for ( i=0; i < length; i++ )
 				{
 					node = nodes[i];
-					if (node.nodeType == Node.ELEMENT_NODE)
+					
+					// stray text
+					if ( node.nodeType == Node.TEXT_NODE &&
+						 node.parentNode == editor )
+					{
+						$newNode = $p.clone().text(node.nodeValue);
+						$(node).replaceWith( $newNode );
+						node = $newNode.get();
+					}
+
+					if ( node.nodeType == Node.ELEMENT_NODE )
 					{
 						tagName = node.tagName.toLowerCase();
-						open(tagName, node);
-						walk(node.childNodes);
-						close(tagName);
+						open( tagName, node );
+						walk( node.childNodes );
+						close( tagName );
+
 					}
-					else if (node.nodeType == Node.TEXT_NODE)
+					else if ( node.nodeType == Node.TEXT_NODE )
 					{
-						read(node.nodeValue);
+						read( node.nodeValue );
 					}
-				}
+		        }
 			}
 
-			function open(tagName, node)
+			function open( tagName, node )
 			{
-				if (mode == ACCUMULATING_LINE)
+				$node = $(node);
+
+				if ( mode == ACCUMULATING_LINE )
 				{
-					// if it's a block-level element and the line buffer is full, flush it
-					if (isBlockElement(tagName))
+					if ( isBlockElement(tagName) )
 					{
-						if (isEmptyParagraph(node))
+						if ( isEmptyParagraph( $node ) )
 						{
-							accumulate($("<br />"));
-						}
-
-						flush();
-
-						// if it's a ul or ol, switch to expecting-list-item mode
-						if (isListElement(tagName))
-						{
-							container = insertList(tagName);
-							mode = EXPECTING_LIST_ITEM;
-						}
-					}
-					else if (isLineBreak(tagName))
-					{
-						// if it's a br, and the previous accumulation was a br,
-						// remove the previous accumulation and flush
-						if (isLineBreak(getPreviouslyAccumulatedTagName()))
-						{
-							previousAccumulation.parentNode.removeChild(previousAccumulation);
+							accumulate( $('<br />') );
 							flush();
 						}
 
-						// accumulate the br
-						accumulate(node.cloneNode(false));
+						if ( isListElement(tagName) )
+						{
+							$container	= insertList( tagName );
+							mode		= EXPECTING_LIST_ITEM;
+						}
+					}
+					else if ( isLineBreak(tagName) )
+					{
+						if ( isLineBreak( getPreviouslyAccumulatedTagName() ) )
+						{
+							$(previousAccumulation).remove();
+							flush();
+						}
 
-						// if it's the first br in a line, flush
-						if (!previousAccumulation.previousNode)
+						accumulate( $node.clone(false) );
+
+						if ( ! previousAccumulation.previousNode )
 						{
 							flush();
 						}
 					}
 					else
 					{
-						accumulateInlineElement(tagName, node);
+						accumulateInlineElement( tagName, $node );
 					}
 
 				}
-				else if (mode == EXPECTING_LIST_ITEM)
+				else if ( mode == EXPECTING_LIST_ITEM )
 				{
-					if (isListItemElement(tagName))
+					if ( isListItemElement(tagName) )
 					{
 						mode = ACCUMULATING_LIST_ITEM;
 					}
 
 				}
-				else if (mode == ACCUMULATING_LIST_ITEM)
+				else if ( mode == ACCUMULATING_LIST_ITEM )
 				{
-					if (isLineBreak(tagName))
+					if ( isLineBreak(tagName) )
 					{
-						accumulate(node.cloneNode(false));
+						accumulate( $node.clone(false) );
 					}
 					else if ( ! isBlockElement(tagName) )
 					{
-						accumulateInlineElement(tagName, node);
+						accumulateInlineElement( tagName, node );
 					}
 				}
 			}
 
-			function close(tagName)
+			function close( tagName )
 			{
 				if ( mode == ACCUMULATING_LINE )
 				{
-					if ( isLineElement(tagName) )
+					if ( isLineElement( tagName ) )
 					{
 						flush();
 					}
 
-					if (line != lineContainer)
+					if ( $line != $lineContainer )
 					{
-						lineContainer = lineContainer.parentNode;
+						$lineContainer = $lineContainer.parent();
 					}
-
 				}
-				else if (mode == EXPECTING_LIST_ITEM)
+				else if ( mode == EXPECTING_LIST_ITEM )
 				{
-					if (isListElement(tagName))
+					if ( isListElement(tagName) )
 					{
-						container = result;
+						$container = $result;
 						mode = ACCUMULATING_LINE;
 					}
-
 				}
-				else if (mode == ACCUMULATING_LIST_ITEM)
+				else if ( mode == ACCUMULATING_LIST_ITEM )
 				{
-					if (isListItemElement(tagName))
+					if ( isListItemElement(tagName) )
 					{
 						flush();
 						mode = EXPECTING_LIST_ITEM;
 					}
 
-					if (line != lineContainer)
+					if ( $line != $lineContainer )
 					{
-						lineContainer = lineContainer.parentNode;
+						$lineContainer = $lineContainer.parent();
 					}
 				}
 			}
 
-			function isBlockElement(tagName)
+			function isBlockElement( tagName )
 			{
 				return isLineElement(tagName) || isListElement(tagName);
 			}
 
-			function isLineElement(tagName)
+			function isLineElement( tagName )
 			{
 				return tagName == "p" || tagName == "div";
 			}
 
-			function isListElement(tagName)
+			function isListElement( tagName )
 			{
 				return tagName == "ol" || tagName == "ul";
 			}
@@ -208,46 +222,46 @@ WysiHat.Formatting = (function($){
 				return tagName == "br";
 			}
 
-			function isEmptyParagraph(node)
+			function isEmptyParagraph( $node )
 			{
-				return node.tagName.toLowerCase() == "p" && node.childNodes.length == 0;
+				return $node.is('p') && $node.html() == '';
 			}
 
 			function read(value)
 			{
-				accumulate(document.createTextNode(value));
+				accumulate($(document.createTextNode(value)));
 			}
 
-			function accumulateInlineElement(tagName, node) {
-
-				var element = node.cloneNode(false);
+			function accumulateInlineElement( tagName, $node )
+			{
+				var $element = $node.clone(false);
 
 				if ( tagName == "span" )
 				{
-					if ( $(node).getStyle("fontWeight") == "bold" )
+					if ( $node.css( 'fontWeight' ) == 'bold' )
 					{
-						element = $("<strong></strong>");
+						$element = $('<strong></strong>');
 					}
-					else if ($(node).getStyle("fontStyle") == "italic")
+					else if ( $node.css('fontStyle') == 'italic' )
 					{
-						element = $("<em></em>");
+						$element = $("<em></em>");
 					}
 				}
 
-				accumulate(element);
-				lineContainer = element;
+				accumulate( $element );
+				$lineContainer = $element;
 			}
 
-			function accumulate(node)
+			function accumulate( $node )
 			{
 				if ( mode != EXPECTING_LIST_ITEM )
 				{
-					if ( ! line )
+					if ( ! $line )
 					{
-						line = lineContainer = createLine();
+						$line = $lineContainer = createLine();
 					}
-					previousAccumulation = node;
-					lineContainer.append(node);
+					previousAccumulation = $node.get(0);
+					$lineContainer.append( $node );
 				}
 			}
 
@@ -262,11 +276,11 @@ WysiHat.Formatting = (function($){
 
 			function flush()
 			{
-				if ( line &&
-					 line.get(0).childNodes.length )
+				if ( $line &&
+					 $line.contents().length )
 				{
-					container.append(line);
-					line = lineContainer = null;
+					$container.append( $line );
+					$line = $lineContainer = null;
 				}
 			}
 
@@ -274,25 +288,31 @@ WysiHat.Formatting = (function($){
 			{
 				if ( mode == ACCUMULATING_LINE )
 				{
-					return $("<div></div>");
+					return $('<p></p>');
 				}
 				else if (mode == ACCUMULATING_LIST_ITEM)
 				{
-					return $("<li></li>");
+					return $('<li></li>');
 				}
 			}
 
 			function insertList(tagName)
 			{
-				var list = new Element(tagName);
-				result.appendChild(list);
-				return list;
+				return $('<'+tagName+'></'+tagName+'>')
+							.appendTo($result);
+			}
+			
+			function replaceEmptyParagraphs( $el )
+			{
+				$el.find('p>br:only-child').parent().remove();
+				return $el;
 			}
 
-			result = container = $("<div></div>");
-			walk(element.childNodes);
+			$result = $container = $('<div></div>');
+			walk( $el.get(0).childNodes );
 			flush();
-			return result.html();
+			replaceEmptyParagraphs( $container );
+			return $container.html();
 		}
 	};
 
