@@ -1,8 +1,8 @@
 WysiHat.Formatting = (function($){
 
 	var
-	ACCUMULATING_LINE      = {},
-	EXPECTING_LIST_ITEM    = {},
+	ACCUMULATING_LINE	   = {},
+	EXPECTING_LIST_ITEM	   = {},
 	ACCUMULATING_LIST_ITEM = {};
 
 	return {
@@ -59,7 +59,7 @@ WysiHat.Formatting = (function($){
 			var
 			mode = ACCUMULATING_LINE,
 			$result, $container,
-			$line, $lineContainer,
+			line, lineContainer,
 			previousAccumulation;
 
 			function walk( nodes )
@@ -70,11 +70,10 @@ WysiHat.Formatting = (function($){
 				$p		= $('<p></p>'),
 				node, $newNode, tagName, i;
 
-		        for ( i=0; i < length; i++ )
+				for ( i=0; i < length; i++ )
 				{
 					node = nodes[i];
-					
-					// stray text
+
 					if ( node.nodeType == Node.TEXT_NODE &&
 						 node.parentNode == editor )
 					{
@@ -95,7 +94,7 @@ WysiHat.Formatting = (function($){
 					{
 						read( node.nodeValue );
 					}
-		        }
+				}
 			}
 
 			function open( tagName, node )
@@ -108,7 +107,7 @@ WysiHat.Formatting = (function($){
 					{
 						if ( isEmptyParagraph( $node ) )
 						{
-							accumulate( $('<br />') );
+							accumulate( $('<br />').get(0) );
 							flush();
 						}
 
@@ -126,7 +125,7 @@ WysiHat.Formatting = (function($){
 							flush();
 						}
 
-						accumulate( $node.clone(false) );
+						accumulate( $node.clone(false).get(0) );
 
 						if ( ! previousAccumulation.previousNode )
 						{
@@ -151,11 +150,11 @@ WysiHat.Formatting = (function($){
 				{
 					if ( isLineBreak(tagName) )
 					{
-						accumulate( $node.clone(false) );
+						accumulate( $node.clone(false).get(0) );
 					}
 					else if ( ! isBlockElement(tagName) )
 					{
-						accumulateInlineElement( tagName, node );
+						accumulateInlineElement( tagName, $node );
 					}
 				}
 			}
@@ -169,9 +168,9 @@ WysiHat.Formatting = (function($){
 						flush();
 					}
 
-					if ( $line != $lineContainer )
+					if ( line != lineContainer )
 					{
-						$lineContainer = $lineContainer.parent();
+						lineContainer = lineContainer.parentNode;
 					}
 				}
 				else if ( mode == EXPECTING_LIST_ITEM )
@@ -190,9 +189,9 @@ WysiHat.Formatting = (function($){
 						mode = EXPECTING_LIST_ITEM;
 					}
 
-					if ( $line != $lineContainer )
+					if ( line != lineContainer )
 					{
-						$lineContainer = $lineContainer.parent();
+						lineContainer = lineContainer.parentNode;
 					}
 				}
 			}
@@ -229,12 +228,13 @@ WysiHat.Formatting = (function($){
 
 			function read(value)
 			{
-				accumulate($(document.createTextNode(value)));
+				accumulate(document.createTextNode(value));
 			}
 
 			function accumulateInlineElement( tagName, $node )
 			{
-				var $element = $node.clone(false);
+				var
+				$element = $($node.get(0).cloneNode(false));
 
 				if ( tagName == "span" )
 				{
@@ -248,20 +248,21 @@ WysiHat.Formatting = (function($){
 					}
 				}
 
+				$element = $element.get(0);
+
 				accumulate( $element );
-				$lineContainer = $element;
+				lineContainer = $element;
 			}
 
-			function accumulate( $node )
+			function accumulate(node)
 			{
-				if ( mode != EXPECTING_LIST_ITEM )
-				{
-					if ( ! $line )
+				if (mode != EXPECTING_LIST_ITEM) {
+					if ( ! line )
 					{
-						$line = $lineContainer = createLine();
+						line = lineContainer = createLine();
 					}
-					previousAccumulation = $node.get(0);
-					$lineContainer.append( $node );
+					previousAccumulation = node;
+					lineContainer.appendChild(node);
 				}
 			}
 
@@ -276,38 +277,38 @@ WysiHat.Formatting = (function($){
 
 			function flush()
 			{
-				if ( $line &&
-					 $line.contents().length )
+				if ( line && line.childNodes.length )
 				{
-					$container.append( $line );
-					$line = $lineContainer = null;
+					$container.append( $(line) );
+					line = lineContainer = null;
 				}
 			}
 
 			function createLine()
 			{
+				var $el;
 				if ( mode == ACCUMULATING_LINE )
 				{
-					return $('<p></p>');
+					$el = $('<p></p>');
 				}
 				else if (mode == ACCUMULATING_LIST_ITEM)
 				{
-					return $('<li></li>');
+					$el = $('<li></li>');
 				}
+				return $el.get(0);
 			}
 
 			function insertList(tagName)
 			{
 				return $('<'+tagName+'></'+tagName+'>')
-							.appendTo($result);
+							.appendTo( $result );
 			}
-			
+
 			function replaceEmptyParagraphs( $el )
 			{
 				$el.find('p>br:only-child').parent().remove();
-				return $el;
 			}
-
+			
 			$result = $container = $('<div></div>');
 			walk( $el.get(0).childNodes );
 			flush();

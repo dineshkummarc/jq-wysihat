@@ -6,28 +6,29 @@
 		{
 			var
 			$element	= $(this),
-			value;
-
-			element		= $element.get(0);
-
+			element		= $element.get(0),
+			val, evt;
+			
 			if ( $element.is('*[contenteditable=""],*[contenteditable=true]') )
 			{
-				value = $element.html();
+				val	= $element.html();
+				evt	= 'editor:change';
 			}
 			else
 			{
-				value = $element.val();
+				val	= $element.val();
+				evt	= 'field:change';
 			}
 			
-			if ( value &&
-				 element.previousValue != value )
+			if ( val &&
+				 element.previousValue != val )
 			{
-				$element.trigger('field:change');
-				element.previousValue = value;
+				$element.trigger( evt );
+				element.previousValue = val;
 			}
 		}
 
-		$('body').delegate('input,textarea,*[contenteditable=""],*[contenteditable=true]', 'keyup', fieldChangeHandler );
+		$('body').delegate('input,textarea,*[contenteditable],*[contenteditable=true]', 'keydown', fieldChangeHandler );
 		
 	});
 	

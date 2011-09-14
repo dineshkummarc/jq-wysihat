@@ -13,6 +13,7 @@
 		**/
 		id:		'Wysihat_',
 		id_i:	0,
+		sync:	false,
 		attach: function($textarea)
 		{
 			var
@@ -45,25 +46,15 @@
 			//console.log($editArea);
 
 			$textarea
-				.bind( 'field:change', syncValues )
+				.bind( 'field:change', function(){
+					$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
+				 })
 				.hide()
 				.before(
-					$editArea.bind( 'field:change', syncValues )
+					$editArea.bind( 'editor:change', function(){
+						$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
+					})
 				 );
-				
-			function syncValues( e )
-			{
-				var $el = $(this);
-
-				if ( $el.is('div.editor') )
-				{
-					$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
-				}
-				else if ( $el.attr('id') == t_id )
-				{
-					$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
-				}
-			}
 
 			WysiHat.BrowserFeatures.run();
 

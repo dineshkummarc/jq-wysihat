@@ -387,7 +387,7 @@ WysiHat.Commands = (function(window,$) {
       } catch(e) { return null; }
     }
 
-    $(document.activeElement).trigger("field:change");
+    $(document.activeElement).trigger("editor:change");
   }
 
   /**
