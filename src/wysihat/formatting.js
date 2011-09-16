@@ -323,6 +323,35 @@ WysiHat.Formatting = (function($){
 								.replace('<div>','<p>')
 								.replace('</div>','</p>');
 				$container.html( html );
+				$container
+					.find('b').each(function(){
+						replaceElement($(this),'strong');
+					 }).end()
+					.find('i').each(function(){
+						replaceElement($(this),'em');
+					 }).end()
+					;
+			}
+
+			function replaceElement( $el, tag )
+			{
+				var
+				old		= $el.get(0),
+				$new	= $('<'+tag+'></'+tag+'>')
+							.html($el.html()),
+				
+				// copy attributes?
+				attrs	= old.attributes,
+				len		= attrs.length;
+				if ( len )
+				{
+					while ( len-- )
+					{
+						$new.attr( attrs[len].name, attrs[len].value );
+					}
+				}
+				
+				$el.replaceWith( $new );
 			}
 			
 			$result = $container = $('<div></div>');
