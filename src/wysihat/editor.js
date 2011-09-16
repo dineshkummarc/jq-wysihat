@@ -72,13 +72,11 @@
 			
 			function updateField()
 			{
-				console.log('updating the field');
 				$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
 				this.fTimer = null;
 			}
 			function updateEditor()
 			{
-				console.log('updating the editor');
 				$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
 				this.eTimer = null;
 			}
