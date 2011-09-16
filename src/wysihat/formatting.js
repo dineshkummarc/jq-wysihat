@@ -264,9 +264,6 @@ WysiHat.Formatting = (function($){
 
 			function accumulate(node)
 			{
-				console.log('accumulating',node);
-				console.log('line',line);
-				console.log('lineContainer',lineContainer);
 				if ( mode != EXPECTING_LIST_ITEM )
 				{
 					if ( ! line )
@@ -318,17 +315,13 @@ WysiHat.Formatting = (function($){
 
 			function cleanup()
 			{
-				var html = $container
-								.html();
-				console.log(html);
-				html = html
+				var html = $container.html()
 								.replace('</div><div><br></div><div>','</p><p>')
 								.replace('<br></div><div>','<br>')
 								.replace('</div><div>','</p><p>')
 								.replace('<br></div>','</p>')
 								.replace('<div>','<p>')
 								.replace('</div>','</p>');
-				console.log(html);
 				$container.html( html );
 			}
 			
