@@ -11,15 +11,16 @@
 		 *
 		 *  Creates a new editor for the textarea.
 		**/
-		id:		'Wysihat_',
-		id_i:	0,
-		sync:	false,
+		id:			'Wysihat_',
+		id_i:		0,
 		attach: function($textarea)
 		{
 			var
 			t_id = $textarea.attr('id'),
 			e_id = ( t_id != '' ? $textarea.attr('id') : this.id + this.id_i++ ) + '_editor',
-			$editArea = $('#' + e_id);
+			$editArea = $('#' + e_id),
+			fTimer = null,
+			eTimer = null;
 			
 			if ( t_id == '' )
 			{
@@ -47,17 +48,41 @@
 
 			$textarea
 				.bind( 'field:change', function(){
-					$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
+					if ( this.fTimer )
+					{
+						clearTimeout( this.fTimer );
+					}
+					this.fTimer = setTimeout(updateEditor, 500 );
 				 })
+				.bind( 'field:change:immediate', updateEditor )
 				.hide()
 				.before(
-					$editArea.bind( 'editor:change', function(){
-						$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
-					})
+					$editArea
+						.bind( 'editor:change', function(){
+							if ( this.eTimer )
+							{
+								clearTimeout( this.eTimer );
+							}
+							this.eTimer = setTimeout(updateField, 500 );
+						 })
+						.bind( 'editor:change:immediate', updateField )
 				 );
 
 			WysiHat.BrowserFeatures.run();
-
+			
+			function updateField()
+			{
+				console.log('updating the field');
+				$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
+				this.fTimer = null;
+			}
+			function updateEditor()
+			{
+				console.log('updating the editor');
+				$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
+				this.eTimer = null;
+			}
+			
 			return $editArea;
 		}
 	};

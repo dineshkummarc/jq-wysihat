@@ -57,7 +57,10 @@ WysiHat.Formatting = (function($){
 		getApplicationMarkupFrom: function( $el )
 		{
 			var
-			mode = ACCUMULATING_LINE,
+			$clone	= $el.clone(),
+			el_id	= $el.attr('id'),
+			$p		= $('<p></p>'),
+			mode	= ACCUMULATING_LINE,
 			$result, $container,
 			line, lineContainer,
 			previousAccumulation;
@@ -65,22 +68,21 @@ WysiHat.Formatting = (function($){
 			function walk( nodes )
 			{
 				var
-				editor	= $el.get(0),
 				length	= nodes.length,
-				$p		= $('<p></p>'),
-				node, $newNode, tagName, i;
+				node, $node, $newNode, tagName, i;
 
 				for ( i=0; i < length; i++ )
 				{
-					node = nodes[i];
-
-					if ( node.nodeType == Node.TEXT_NODE &&
-						 node.parentNode == editor )
-					{
-						$newNode = $p.clone().text(node.nodeValue);
-						$(node).replaceWith( $newNode );
-						node = $newNode.get();
-					}
+					node	= nodes[i];
+					$node	= $(node);
+					
+					//if ( node.nodeType == Node.TEXT_NODE &&
+					//	 $node.parent().attr('id') == el_id )
+					//{
+					//	$newNode = $p.clone().text(node.nodeValue);
+					//	$node.replaceWith( $newNode );
+					//	node = $newNode.get(0);
+					//}
 
 					if ( node.nodeType == Node.ELEMENT_NODE )
 					{
@@ -125,7 +127,7 @@ WysiHat.Formatting = (function($){
 							flush();
 						}
 
-						accumulate( $node.clone(false).get(0) );
+						accumulate( $node.clone().get(0) );
 
 						if ( ! previousAccumulation.previousNode )
 						{
@@ -150,7 +152,7 @@ WysiHat.Formatting = (function($){
 				{
 					if ( isLineBreak(tagName) )
 					{
-						accumulate( $node.clone(false).get(0) );
+						accumulate( $node.clone().get(0) );
 					}
 					else if ( ! isBlockElement(tagName) )
 					{
@@ -233,30 +235,40 @@ WysiHat.Formatting = (function($){
 
 			function accumulateInlineElement( tagName, $node )
 			{
-				var
-				$element = $($node.get(0).cloneNode(false));
-
-				if ( tagName == "span" )
+				// create a clean element
+				var $el	= $( $node.get(0).cloneNode(false) ),
+				temp;
+				
+				if ( tagName == 'span' )
 				{
 					if ( $node.css( 'fontWeight' ) == 'bold' )
 					{
-						$element = $('<strong></strong>');
+						temp = $('<strong/>').get(0);
+						accumulate( temp );
+						lineContainer = temp;
 					}
-					else if ( $node.css('fontStyle') == 'italic' )
+					if ( $node.css('fontStyle') == 'italic' )
 					{
-						$element = $("<em></em>");
+						temp = $('<em/>').get(0);
+						accumulate( temp );
+						lineContainer = temp;
 					}
 				}
-
-				$element = $element.get(0);
-
-				accumulate( $element );
-				lineContainer = $element;
+				else
+				{
+					$el = $el.get(0);
+					accumulate( $el );
+					lineContainer = $el;
+				}
 			}
 
 			function accumulate(node)
 			{
-				if (mode != EXPECTING_LIST_ITEM) {
+				console.log('accumulating',node);
+				console.log('line',line);
+				console.log('lineContainer',lineContainer);
+				if ( mode != EXPECTING_LIST_ITEM )
+				{
 					if ( ! line )
 					{
 						line = lineContainer = createLine();
@@ -289,7 +301,7 @@ WysiHat.Formatting = (function($){
 				var $el;
 				if ( mode == ACCUMULATING_LINE )
 				{
-					$el = $('<p></p>');
+					$el = $('<div></div>');
 				}
 				else if (mode == ACCUMULATING_LIST_ITEM)
 				{
@@ -304,15 +316,26 @@ WysiHat.Formatting = (function($){
 							.appendTo( $result );
 			}
 
-			function replaceEmptyParagraphs( $el )
+			function cleanup()
 			{
-				$el.find('p>br:only-child').parent().remove();
+				var html = $container
+								.html();
+				console.log(html);
+				html = html
+								.replace('</div><div><br></div><div>','</p><p>')
+								.replace('<br></div><div>','<br>')
+								.replace('</div><div>','</p><p>')
+								.replace('<br></div>','</p>')
+								.replace('<div>','<p>')
+								.replace('</div>','</p>');
+				console.log(html);
+				$container.html( html );
 			}
 			
 			$result = $container = $('<div></div>');
-			walk( $el.get(0).childNodes );
+			walk( $clone.get(0).childNodes );
 			flush();
-			replaceEmptyParagraphs( $container );
+			cleanup();
 			return $container.html();
 		}
 	};
