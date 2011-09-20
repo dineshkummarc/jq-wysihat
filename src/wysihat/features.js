@@ -17,7 +17,7 @@ WysiHat.BrowserFeatures = (function($){
 			.load(function(){
 				if ( typeof frame.contentDocument !== 'undefined' )
 				{
-	        		frameDocument = frame.contentDocument;
+					frameDocument = frame.contentDocument;
 				}
 				else if ( typeof frame.contentWindow !== 'undefined' &&
 						  typeof frame.contentWindow.document !== 'undefined' )
@@ -31,14 +31,14 @@ WysiHat.BrowserFeatures = (function($){
 	    $('body').append($frame);
 	}
 
-  	function detectParagraphType(document)
+  	function detectParagraphType(doc)
 	{
-	    var tagName;
+		var tagName;
 
-    	document.body.innerHTML = '';
-    	document.execCommand('insertparagraph', false, null);
+    	doc.body.innerHTML = '';
+    	doc.execCommand('insertparagraph', false, null);
 
-    	element = document.body.childNodes[0];
+    	element = doc.body.childNodes[0];
     	if (element && element.tagName)
 		{
 	      tagName = element.tagName.toLowerCase();
@@ -48,7 +48,7 @@ WysiHat.BrowserFeatures = (function($){
 		{
 	    	features.paragraphType = "div";
 		}
-		else if (document.body.innerHTML == "<p><br></p>")
+		else if (doc.body.innerHTML == "<p><br></p>")
 		{
 			features.paragraphType = "br";
 		}
@@ -58,14 +58,14 @@ WysiHat.BrowserFeatures = (function($){
 		}
 	}
 
-	function detectIndentType(document)
+	function detectIndentType(doc)
 	{
 		var tagName;
 
-		document.body.innerHTML = 'tab';
-		document.execCommand('indent', false, null);
+		doc.body.innerHTML = 'tab';
+		doc.execCommand('indent', false, null);
 
-		element = document.body.childNodes[0];
+		element = doc.body.childNodes[0];
 		if (element && element.tagName)
 		{
 			tagName = element.tagName.toLowerCase();
@@ -83,7 +83,7 @@ WysiHat.BrowserFeatures = (function($){
 			detectIndentType(document);
 			features.finished = true;
 		});
-	}
+	};
 
 	return features;
 	

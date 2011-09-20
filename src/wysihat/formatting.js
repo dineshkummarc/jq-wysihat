@@ -9,7 +9,7 @@ WysiHat.Formatting = (function($){
 		getBrowserMarkupFrom: function( $el )
 		{
 
-			var $container = $('<div>' + $el.val() + '</div>');
+			var $container = $('<div>' + $el.val().replace(/\n/,'') + '</div>');
 
 			function spanify( $element, style )
 			{
@@ -316,12 +316,19 @@ WysiHat.Formatting = (function($){
 			function cleanup()
 			{
 				var html = $container.html()
+								.replace( /<\/?[\w]+/g, function(tag){
+									return tag.toLowerCase();
+								 })
 								.replace('</div><div><br></div><div>','</p><p>')
 								.replace('<br></div><div>','<br>')
 								.replace('</div><div>','</p><p>')
 								.replace('<br></div>','</p>')
 								.replace('<div>','<p>')
-								.replace('</div>','</p>');
+								.replace('</div>','</p>')
+								// Fancy formatting
+									.replace(/<\/(a|p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|ins|del|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|table|thead|tfoot|tbody|tr|th|td|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
+								.replace(/\n+/,'\n')
+								.replace(/<p>\n+<\/p>/,'');
 				$container.html( html );
 				$container
 					.find('b').each(function(){
@@ -330,6 +337,7 @@ WysiHat.Formatting = (function($){
 					.find('i').each(function(){
 						replaceElement($(this),'em');
 					 }).end()
+					.find('p:empty').remove()
 					;
 			}
 

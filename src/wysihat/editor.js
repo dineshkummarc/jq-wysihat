@@ -68,7 +68,7 @@
 						.bind( 'editor:change:immediate', updateField )
 				 );
 
-			WysiHat.BrowserFeatures.run();
+			//WysiHat.BrowserFeatures.run();
 			
 			function updateField()
 			{
