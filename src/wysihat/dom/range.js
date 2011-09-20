@@ -55,7 +55,7 @@ jQuery.extend(Range.prototype, (function(){
 	{
 		var
 		parent	= this.commonAncestorContainer,
-		that	= this;
+		that	= this,
 		child, range;
 
 		while (parent.nodeType == Node.TEXT_NODE)
