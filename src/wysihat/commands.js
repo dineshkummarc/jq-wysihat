@@ -464,11 +464,13 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function wrapHTML()
 	{
+		console.log('hi');
+		console.log(arguments);
 		var
 		selection	= WIN.getSelection(),
 		range		= selection.getRangeAt(0),
 		node		= selection.getNode(),
-		arg_length	= argument.length,
+		arg_length	= arguments.length,
 		el;
 		
 		if (range.collapsed)
@@ -478,11 +480,13 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			selection.removeAllRanges();
 			selection.addRange(range);
 		}
-		
+		console.log(arg_length);
 		range = selection.getRangeAt(0);
 		while ( arg_length-- )
 		{
-			range.surroundContents( $('<' + arguments[arg_length] + '/>').get(0) );
+			el = $('<' + arguments[arg_length] + '/>');
+			console.log(el);
+			range.surroundContents( el.get(0) );
 			// ToDo: update the range
 		}
 		$(DOC.activeElement).trigger("editor:change");
@@ -563,7 +567,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		unorderedListSelected:		unorderedListSelected,
 		insertImage:				insertImage,
 		insertHTML:					insertHTML,
-		//wrapHTML:					insertHTML,
+		wrapHTML:					wrapHTML,
 		execCommand:				execCommand,
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
