@@ -20,6 +20,7 @@ var WysiHat = {};
 //= require "wysihat/commands"
 
 //= require "wysihat/dom/ierange"
+//= require "wysihat/dom/node"
 //= require "wysihat/dom/range"
 //= require "wysihat/dom/selection"
 //= require "wysihat/dom/bookmark"
