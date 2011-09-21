@@ -321,15 +321,15 @@ WysiHat.Formatting = (function($){
 								.replace( /<\/?[\w]+/g, function(tag){
 									return tag.toLowerCase();
 								 })
-								.replace('</div><div><br></div><div>','</p><p>')
-								.replace('<br></div><div>','<br>')
-								.replace('</div><div>','</p><p>')
-								.replace('<br></div>','</p>')
-								.replace('<div>','<p>')
-								.replace('</div>','</p>')
+								//.replace('</div><div><br></div><div>','</p><p>')
+								//.replace('<br></div><div>','<br>')
+								//.replace('</div><div>','</p><p>')
+								//.replace('<br></div>','</p>')
+								//.replace('<div>','<p>')
+								//.replace('</div>','</p>')
 								.replace('<p>&nbsp;</p>','')
 								// Fancy formatting
-									.replace(/<\/(a|p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|ins|del|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|table|thead|tfoot|tbody|tr|th|td|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
+									.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
 								.replace(/\n+/,'\n')
 								.replace(/<p>\n+<\/p>/,'');
 				$container.html( html );
