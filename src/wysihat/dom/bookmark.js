@@ -1,84 +1,81 @@
-//= require "selection"
+//= require "./selection"
 
-(function($){
-	
-	if ($.browser.msie)
+(function( DOC, $ ){
+
+	if ( $.browser.msie )
 	{
-	  	$.extend(Selection.prototype, (function(){
-			function setBookmark()
-			{
-				var
-				bookmark = $('#bookmark'),
-				parent, range;
-				
-				if (bookmark) bookmark.remove();
 
-				bookmark	= $('<span id="bookmark">&nbsp;</span>');
-				parent		= $('<div></div>').html(bookmark);
-				range		= this._document.selection.createRange();
-				range.collapse();
-				range.pasteHTML(parent.html());
-			}
-
-			function moveToBookmark()
-			{
-				var
-				bookmark = $('#bookmark'),
-				range;
-
-				if ( ! bookmark ) return;
-
-				range = this._document.selection.createRange();
-				range.moveToElementText(bookmark);
-				range.collapse();
-				range.select();
-
-				bookmark.remove();
-			}
-
-			return {
-				setBookmark:    setBookmark,
-				moveToBookmark: moveToBookmark
-			};
+		Selection.prototype.setBookmark = function()
+		{
+			var
+			$bookmark	= $('#wysihat-bookmark'),
+			$parent		= $('<div/>'),
+			range		= this._document.selection.createRange();
 			
-		})());
+			if ( $bookmark.length > 0 )
+			{
+				$bookmark.remove();
+			}
+			
+			$bookmark = $( '<span id="wysihat-bookmark">&nbsp;</span>' )
+							.appendTo( $parent );
+			
+			range.collapse();
+			range.pasteHTML( $parent.html() );
+	    };
+		Selection.prototype.moveToBookmark = function()
+		{
+			var
+			$bookmark	= $('#wysihat-bookmark'),
+			range		= this._document.selection.createRange();
+			
+			if ( $bookmark.length > 0 )
+			{
+				$bookmark.remove();
+			}
+			
+			range.moveToElementText( $bookmark.get(0) );
+			range.collapse();
+			range.select();
+			
+			$bookmark.remove();
+	    };
+	
 	}
 	else
-	{ 
-		$.extend(Selection.prototype, (function(){
+	{
+
+		Selection.prototype.setBookmark = function()
+		{
+			var $bookmark	= $('#wysihat-bookmark');
 			
-			function setBookmark()
+			if ( $bookmark.length > 0 )
 			{
-				var bookmark = $('#bookmark');
-				
-				if (bookmark) bookmark.remove();
-
-				bookmark = $('<span id="bookmark">&nbsp;</span>');
-				this.getRangeAt(0).insertNode(bookmark);
+				$bookmark.remove();
 			}
-
-			function moveToBookmark()
-			{
-				var
-				bookmark = $('#bookmark'),
-				range;
-				
-				if (!bookmark) return;
-
-				range = document.createRange();
-				range.setStartBefore(bookmark);
-				this.removeAllRanges();
-				this.addRange(range);
-
-				bookmark.remove();
-			}
-
-			return {
-				setBookmark:    setBookmark,
-				moveToBookmark: moveToBookmark
-			};
 			
-		})());
+			$bookmark = $( '<span id="wysihat-bookmark">&nbsp;</span>' );
+			
+			this.getRangeAt(0).insertNode( $bookmark.get(0) );
+	    };
+		Selection.prototype.moveToBookmark = function()
+		{
+			var
+			$bookmark	= $('#wysihat-bookmark'),
+			range		= DOC.createRange();
+			
+			if ( $bookmark.length > 0 )
+			{
+				$bookmark.remove();
+			}
+			
+			range.setStartBefore( $bookmark.get(0) );
+			this.removeAllRanges();
+			this.addRange(range);
+			
+			$bookmark.remove();
+	    };
+
 	}
-	
-})(jQuery);
+
+})(document,jQuery);
