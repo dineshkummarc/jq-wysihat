@@ -44,7 +44,7 @@
 		})());
 	}
 	else
-	{
+	{ 
 		$.extend(Selection.prototype, (function(){
 			
 			function setBookmark()
