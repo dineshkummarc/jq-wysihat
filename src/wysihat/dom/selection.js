@@ -14,13 +14,15 @@ if ( typeof Selection == 'undefined' )
 	{
 	
 		// TODO: More robust getNode
-		function getNode() {
+		function getNode()
+		{
 			var range = this._document.selection.createRange();
 			return $(range.parentElement());
 		}
 
 		// TODO: IE selectNode should work with range.selectNode
-		function selectNode(element) {
+		function selectNode(element)
+		{
 			var range = this._document.body.createTextRange();
 			range.moveToElementText(element);
 			range.select();

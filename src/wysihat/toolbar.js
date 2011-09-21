@@ -169,7 +169,7 @@
 			$(element).click(function(){
 				handler(editor);
 				//event.stop();
-				$(document.activeElement).trigger("selection:change");
+				$(document.activeElement).trigger( 'wysihat-selection:change' );
 				return false;
 			});
 		}

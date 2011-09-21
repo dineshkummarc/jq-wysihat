@@ -453,7 +453,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			}
 			catch(e) { return NULL; }
 		}
-		$(DOC.activeElement).trigger("wysihat-editor:change");
+		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
 	}
 	
 	/**
@@ -485,7 +485,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			range.surroundContents( el.get(0) );
 			// ToDo: update the range
 		}
-		$(DOC.activeElement).trigger("wysihat-editor:change");
+		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
 	}
 
 	/**

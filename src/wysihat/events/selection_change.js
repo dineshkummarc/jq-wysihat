@@ -2,35 +2,39 @@ jQuery(document).ready(function(){
 	
 	var
 	$		= jQuery,
-	$doc	= $(document),
+	DOC		= document,
+	$doc	= $(DOC),
 	previousRange,
 	selectionChangeHandler;
 	
-	if ( 'onselectionchange' in document &&
-		 'selection' in document )
+	// IE
+	if ( 'onselectionchange' in DOC &&
+		 'selection' in DOC )
 	{
 		selectionChangeHandler = function()
 		{
 			var
-			range	= document.selection.createRange(),
+			range	= DOC.selection.createRange(),
 			element	= range.parentElement();
-			$(element).trigger("selection:change");
+			$(element).trigger( 'wysihat-selection:change' );
 		}
 
- 		$doc.bind("selectionchange", selectionChangeHandler);
+ 		$doc.bind( 'selectionchange', selectionChangeHandler );
 	}
 	else
 	{
-		selectionChangeHandler = function() {
+		selectionChangeHandler = function()
+		{
 			var
-			element        = document.activeElement,
+			element        = DOC.activeElement,
 			elementTagName = element.tagName.toLowerCase(),
 			selection, range;
 
-			if (elementTagName == "textarea" || elementTagName == "input")
+			if ( elementTagName == 'textarea' ||
+				 elementTagName == 'input' )
 			{
 				previousRange = null;
-				$(element).trigger("selection:change");
+				$(element).trigger( 'wysihat-selection:change' );
 			}
 			else
 			{
@@ -47,12 +51,12 @@ jQuery(document).ready(function(){
 					element = element.parentNode;
 				}
 
-				$(element).trigger("selection:change");
+				$(element).trigger( 'wysihat-selection:change' );
 			}
 		};
 
-		$doc.mouseup(selectionChangeHandler);
-		$doc.keyup(selectionChangeHandler);
+		$doc.mouseup( selectionChangeHandler );
+		$doc.keyup( selectionChangeHandler );
 	}
 
 });
