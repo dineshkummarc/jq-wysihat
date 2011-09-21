@@ -464,8 +464,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function wrapHTML()
 	{
-		console.log('hi');
-		console.log(arguments);
 		var
 		selection	= WIN.getSelection(),
 		range		= selection.getRangeAt(0),
@@ -480,12 +478,10 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			selection.removeAllRanges();
 			selection.addRange(range);
 		}
-		console.log(arg_length);
 		range = selection.getRangeAt(0);
 		while ( arg_length-- )
 		{
 			el = $('<' + arguments[arg_length] + '/>');
-			console.log(el);
 			range.surroundContents( el.get(0) );
 			// ToDo: update the range
 		}
