@@ -30,14 +30,14 @@
 		
 			if ( $editArea.length )
 			{
-				if ( ! $editArea.hasClass('editor') )
+				if ( ! $editArea.hasClass('wysihat-editor') )
 				{
-					$editArea.addClass('editor');
+					$editArea.addClass('wysihat-editor');
 				}
 				return $editArea;
 			}
 			
-			$editArea = $('<div id="' + e_id + '" class="editor" contentEditable="true"></div>')
+			$editArea = $('<div id="' + e_id + '" class="wysihat-editor" contentEditable="true"></div>')
 							.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
 							
 			//console.log($editArea);
@@ -47,25 +47,25 @@
 			//console.log($editArea);
 
 			$textarea
-				.bind( 'field:change', function(){
+				.bind( 'wysihat-field:change', function(){
 					if ( this.fTimer )
 					{
 						clearTimeout( this.fTimer );
 					}
 					this.fTimer = setTimeout(updateEditor, 500 );
 				 })
-				.bind( 'field:change:immediate', updateEditor )
+				.bind( 'wysihat-field:change:immediate', updateEditor )
 				.hide()
 				.before(
 					$editArea
-						.bind( 'editor:change', function(){
+						.bind( 'wysihat-editor:change', function(){
 							if ( this.eTimer )
 							{
 								clearTimeout( this.eTimer );
 							}
 							this.eTimer = setTimeout(updateField, 500 );
 						 })
-						.bind( 'editor:change:immediate', updateField )
+						.bind( 'wysihat-editor:change:immediate', updateField )
 				 );
 
 			//WysiHat.BrowserFeatures.run();
