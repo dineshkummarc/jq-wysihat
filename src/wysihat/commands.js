@@ -2,7 +2,7 @@
 //= require "./dom/selection"
 //= require "./events/field_change"
 
-/** section: wysihat
+/** section: WysiHat
  *  mixin WysiHat.Commands
  *
  *  Methods will be mixed into the editor element. Most of these
@@ -278,7 +278,9 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	function linkSelected()
 	{
 		var node = WIN.getSelection().getNode();
-		return node ? node.get(0).tagName.toUpperCase() == 'A' : FALSE;
+		return node instanceof Element
+					? $(node).is('a')
+					: ( node ? node : FALSE );
 	}
 
 	/**
@@ -456,7 +458,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			}
 			catch(e) { return NULL; }
 		}
-		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
 	}
 	
 	/**
@@ -488,7 +490,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			range.surroundContents( el.get(0) );
 			// ToDo: update the range
 		}
-		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
 	}
 
 	/**
@@ -499,39 +501,34 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function changeContentBlock( tagName )
 	{
-		console.log('changeContentBlock to '+tagName);
 		var
 		$editor		= $(this),
 		is_content	= WysiHat.Element.isContent,
 		selection	= WIN.getSelection(),
 		ranges		= selection.rangeCount,
 		$el;
-		console.log(ranges);
 		while ( ranges-- )
 		{
 			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer.parentElement );
 			while ( ! is_content( $el ) )
 			{
 				$el = $el.parent();
-				console.log( $el );
 			}
-			console.log( $el );
-			if ( $el.data('wysihat-replaced') == UNDEFINED )
+			if ( $el.data('WysiHat-replaced') == UNDEFINED )
 			{
 				$el = this.replaceElement( $el, tagName )
-						.data('wysihat-replaced',TRUE);
+						.data('WysiHat-replaced',TRUE);
 			}
 		}
 
 		// cleanup
-		console.log( 'cleaning up' );
 		$editor
 			.children( tagName )
 				.each(function(){
-					$(this).removeData('wysihat-replaced');
+					$(this).removeData('WysiHat-replaced');
 				});
 
-		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
 	}
 
 	/**
@@ -553,6 +550,12 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function replaceElement( $el, tagName )
 	{
+		// don't change the editor EVER!
+		if ( $el.is('.WysiHat-editor') )
+		{
+			return;
+		}
+		
 		var
 		old		= $el.get(0),
 		$new	= $('<'+tagName+'/>')
@@ -593,11 +596,13 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			range	= selection.getRangeAt( ranges );
 			$el		= $( range.commonAncestorContainer );
 			el		= $el.get(0);
+			
 			// make sure we're in an element, not a text node
 			if ( el.nodeType == 3 )
 			{
 				$el = $el.parent();
 			}
+			
 			// check to see that we're as high up in the DOM as we need to be
 			if ( isFormatter( $el ) )
 			{
@@ -606,7 +611,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 					 el.lastChild == range.endContainer &&
 					 range.endOffset === el.lastChild.length )
 				{
-					// element fully contains the selection
 					text = $el.text();
 					if ( $el.parent().text() == text &&
 					 	 isFormatter( $el.parent() ) )
@@ -617,19 +621,22 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 						 		  isFormatter( $el ) )
 					}
 				}
-				else
-				{
-					$el.replaceWith( $el.text() );
-					$el = null;
-				}
 			}
-			if ( $el )
-			{
-				$el.html( $el.text() );
-			}
+			
+			// don't adjust the editor
+			$el.find('*')
+				.andSelf()
+				.not('.WysiHat-editor')
+				.each(function(){
+					var $this = $(this);
+					if ( isFormatter( $this ) )
+					{
+						$this.replaceWith( $this.html() );
+					}
+				});
 		}
 
-		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
 	}
 	
 	/**
