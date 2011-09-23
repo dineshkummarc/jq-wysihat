@@ -12,7 +12,7 @@ if ( typeof Selection == 'undefined' )
 	
 	if ( $.browser.msie )
 	{
-	
+		
 		// TODO: More robust getNode
 		function getNode()
 		{

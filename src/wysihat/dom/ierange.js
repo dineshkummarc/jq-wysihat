@@ -78,11 +78,7 @@ if (!window.getSelection) {
 				this.startContainer = this.endContainer = document.body;
 				this.endOffset = DOMUtils.getNodeLength(document.body);
 			}
-			Range.START_TO_START = 0;
-			Range.START_TO_END = 1;
-			Range.END_TO_END = 2;
-			Range.END_TO_START = 3;
-
+			
 			function findChildPosition( node )
 			{
 				for ( var i = 0; node = node.previousSibling; i++ )
@@ -94,17 +90,22 @@ if (!window.getSelection) {
 
 			Range.prototype = {
 				
-				startContainer: null,
-				startOffset: 0,
-				endContainer: null,
-				endOffset: 0,
+				START_TO_START:	0,
+				START_TO_END:	1,
+				END_TO_END:		2,
+				END_TO_START:	3,
+				
+				startContainer:	null,
+				startOffset:	0,
+				endContainer:	null,
+				endOffset:		0,
 				commonAncestorContainer: null,
-				collapsed: false,
-				_document: null,
+				collapsed:		false,
+				_document:		null,
 
 				_toTextRange: function()
 				{
-					function adoptEndPoint(textRange, domRange, bStart)
+					function adoptEndPoint( textRange, domRange, bStart )
 					{
 						// find anchor node and offset
 						var
@@ -307,26 +308,26 @@ if (!window.getSelection) {
 					var containerA, offsetA, containerB, offsetB;
 					switch ( how )
 					{
-						case Range.START_TO_START:
-						case Range.START_TO_END:
+						case this.START_TO_START:
+						case this.START_TO_END:
 							containerA = this.startContainer;
 							offsetA = this.startOffset;
 							break;
-						case Range.END_TO_END:
-						case Range.END_TO_START:
+						case this.END_TO_END:
+						case this.END_TO_START:
 							containerA = this.endContainer;
 							offsetA = this.endOffset;
 							break;
 					}
 					switch ( how )
 					{
-						case Range.START_TO_START:
-						case Range.END_TO_START:
+						case this.START_TO_START:
+						case this.END_TO_START:
 							containerB = sourceRange.startContainer;
 							offsetB = sourceRange.startOffset;
 							break;
-						case Range.START_TO_END:
-						case Range.END_TO_END:
+						case this.START_TO_END:
+						case this.END_TO_END:
 							containerB = sourceRange.endContainer;
 							offsetB = sourceRange.endOffset;
 							break;
@@ -349,8 +350,8 @@ if (!window.getSelection) {
 				{
 					// return cloned range
 					var range = new Range( this._document );
-					range.setStart(this.startContainer, this.startOffset);
-					range.setEnd(this.endContainer, this.endOffset);
+					range.setStart( this.startContainer, this.startOffset );
+					range.setEnd( this.endContainer, this.endOffset );
 					return range;
 				},
 				detach: function()

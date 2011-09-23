@@ -335,41 +335,25 @@ WysiHat.Formatting = (function($){
 				$container.html( html );
 				$container
 					.find('b').each(function(){
-						replaceElement($(this),'strong');
+						WysiHat.Commands.replaceElement($(this),'strong');
 					 }).end()
 					.find('i').each(function(){
-						replaceElement($(this),'em');
+						WysiHat.Commands.replaceElement($(this),'em');
 					 }).end()
 					.find('p:empty').remove()
 					;
 			}
 
-			function replaceElement( $el, tag )
-			{
-				var
-				old		= $el.get(0),
-				$new	= $('<'+tag+'></'+tag+'>')
-							.html($el.html()),
-				
-				// copy attributes?
-				attrs	= old.attributes,
-				len		= attrs.length;
-				if ( len )
-				{
-					while ( len-- )
-					{
-						$new.attr( attrs[len].name, attrs[len].value );
-					}
-				}
-				
-				$el.replaceWith( $new );
-			}
-			
 			$container = $('<div></div>').html($clone.html());
 			//walk( $clone.get(0).childNodes );
 			//flush();
 			cleanup();
 			return $container.html();
+		},
+		
+		isContentBlock: function( $el )
+		{
+			return $el.is('h1,h2,h3,h4,h5,h6,div,p,figcaption');
 		}
 	};
 

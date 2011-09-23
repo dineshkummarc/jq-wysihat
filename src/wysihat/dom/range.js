@@ -9,10 +9,10 @@ jQuery.extend(Range.prototype, (function(){
 		{
 			return false;
 		}
-		return ( this.compareBoundaryPoints(this.START_TO_START, range) == -1 &&
-				 this.compareBoundaryPoints(this.START_TO_END, range) == -1 &&
-				 this.compareBoundaryPoints(this.END_TO_END, range) == -1 &&
-				 this.compareBoundaryPoints(this.END_TO_START, range) == -1 );
+		return ( this.compareBoundaryPoints( this.START_TO_START, range ) == -1 &&
+				 this.compareBoundaryPoints( this.START_TO_END, range ) == -1 &&
+				 this.compareBoundaryPoints( this.END_TO_END, range ) == -1 &&
+				 this.compareBoundaryPoints( this.END_TO_START, range ) == -1 );
 	}
 
 	function afterRange(range)
@@ -22,10 +22,10 @@ jQuery.extend(Range.prototype, (function(){
 		{
 			return false;
 		}
-		return ( this.compareBoundaryPoints(this.START_TO_START, range) == 1 &&
-				 this.compareBoundaryPoints(this.START_TO_END, range) == 1 &&
-				 this.compareBoundaryPoints(this.END_TO_END, range) == 1 &&
-				 this.compareBoundaryPoints(this.END_TO_START, range) == 1 );
+		return ( this.compareBoundaryPoints( this.START_TO_START, range ) == 1 &&
+				 this.compareBoundaryPoints( this.START_TO_END, range ) == 1 &&
+				 this.compareBoundaryPoints( this.END_TO_END, range ) == 1 &&
+				 this.compareBoundaryPoints( this.END_TO_START, range ) == 1 );
 	}
 
 	function betweenRange(range)
@@ -45,10 +45,10 @@ jQuery.extend(Range.prototype, (function(){
 		{
 			return false;
 		}
-		return ( this.compareBoundaryPoints(this.START_TO_START, range) == 0 &&
-				 this.compareBoundaryPoints(this.START_TO_END, range) == 1 &&
-				 this.compareBoundaryPoints(this.END_TO_END, range) == 0 &&
-				 this.compareBoundaryPoints(this.END_TO_START, range) == -1 );
+		return ( this.compareBoundaryPoints( this.START_TO_START, range ) == 0 &&
+				 this.compareBoundaryPoints( this.START_TO_END, range ) == 1 &&
+				 this.compareBoundaryPoints( this.END_TO_END, range ) == 0 &&
+				 this.compareBoundaryPoints( this.END_TO_START, range ) == -1 );
 	}
 
 	function getNode()
@@ -56,20 +56,20 @@ jQuery.extend(Range.prototype, (function(){
 		var
 		parent	= this.commonAncestorContainer,
 		that	= this,
-		child, range;
+		child;
 
 		while (parent.nodeType == Node.TEXT_NODE)
 		{
 			parent = parent.parentNode;
 		}
 		
-		jQuery.each( parent.children, function( index, child ){
+		jQuery(parent).children().each(function(){
 			var range = document.createRange();
-			range.selectNodeContents(child);
+			range.selectNodeContents(this);
 			child = that.betweenRange(range);
 		});
 
-		return $(child || parent);
+		return $(child || parent).get(0);
 	}
 
 	return {
