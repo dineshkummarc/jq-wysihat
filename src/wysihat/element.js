@@ -37,42 +37,102 @@ WysiHat.Element = (function( $ ){
 		return ret;
 	}
 	
+	/**
+	*  WysiHat.Element#isRoot( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "rooting" types
+	**/
 	function isRoot( $el )
 	{
 		return is( $el, roots );
 	}
+	/**
+	*  WysiHat.Element#isSection( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "sectioning" types
+	**/
 	function isSection( $el )
 	{
 		return is( $el, sections );
 	}
+	/**
+	*  WysiHat.Element#isContainer( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "container" types that don't hold content
+	**/
 	function isContainer( $el )
 	{
 		return is( $el, containers  );
 	}
+	/**
+	*  WysiHat.Element#isSubContainer( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "subcontainer" types
+	**/
 	function isSubContainer( $el )
 	{
-		return is( $el, sub_containers  );
+		return is( $el, sub_containers );
 	}
+	/**
+	*  WysiHat.Element#isBlock( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "block" types
+	**/
 	function isBlock( $el )
 	{
 		return is( $el, content, sub_containers, containers, sections, roots );
 	}
+	/**
+	*  WysiHat.Element#isContent( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "content container" types
+	**/
 	function isContent( $el )
 	{
 		return is( $el, content, sub_containers );
 	}
+	/**
+	*  WysiHat.Element#isMedia( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "media" types
+	**/
 	function isMedia( $el )
 	{
 		return is( $el, media );
 	}
+	/**
+	*  WysiHat.Element#isPhrase( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the "phrasing" types
+	**/
 	function isPhrase( $el )
 	{
 		return is( $el, phrases );
 	}
+	/**
+	*  WysiHat.Element#isFormatter( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is a formatting element
+	**/
 	function isFormatter( $el )
 	{
 		return is( $el, formatting );
 	}
+	/**
+	*  WysiHat.Element#isFormComponent( $el ) -> boolean
+	*  - $el (jQuery Object): $element to be tested
+	*
+	*  Checks to see if the element is one of the form-related types
+	**/
 	function isFormComponent( $el )
 	{
 		return is( $el, forms );
