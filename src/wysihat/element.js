@@ -65,7 +65,7 @@ WysiHat.Element = (function( $ ){
 	**/
 	function isContainer( $el )
 	{
-		return is( $el, containers  );
+		return is( $el, containers );
 	}
 	/**
 	*  WysiHat.Element#isSubContainer( $el ) -> boolean
@@ -85,7 +85,7 @@ WysiHat.Element = (function( $ ){
 	**/
 	function isBlock( $el )
 	{
-		return is( $el, content, sub_containers, containers, sections, roots );
+		return is( $el, roots, sections, containers, sub_containers, content );
 	}
 	/**
 	*  WysiHat.Element#isContent( $el ) -> boolean
@@ -95,7 +95,7 @@ WysiHat.Element = (function( $ ){
 	**/
 	function isContent( $el )
 	{
-		return is( $el, content, sub_containers );
+		return is( $el, sub_containers, content );
 	}
 	/**
 	*  WysiHat.Element#isMedia( $el ) -> boolean

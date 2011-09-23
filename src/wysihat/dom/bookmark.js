@@ -8,7 +8,7 @@
 		function setBookmark()
 		{
 			var
-			$bookmark	= $('#wysihat-bookmark'),
+			$bookmark	= $('#WysiHat-bookmark'),
 			$parent		= $('<div/>'),
 			range		= this._document.selection.createRange();
 
@@ -17,7 +17,7 @@
 				$bookmark.remove();
 			}
 
-			$bookmark = $( '<span id="wysihat-bookmark">&nbsp;</span>' )
+			$bookmark = $( '<span id="WysiHat-bookmark">&nbsp;</span>' )
 							.appendTo( $parent );
 
 			range.collapse();
@@ -27,7 +27,7 @@
 		function moveToBookmark(element)
 		{
 			var
-			$bookmark	= $('#wysihat-bookmark'),
+			$bookmark	= $('#WysiHat-bookmark'),
 			range		= this._document.selection.createRange();
 
 			if ( $bookmark.length > 0 )
@@ -48,14 +48,14 @@
 
 		function setBookmark()
 		{
-			var $bookmark	= $('#wysihat-bookmark');
+			var $bookmark	= $('#WysiHat-bookmark');
 
 			if ( $bookmark.length > 0 )
 			{
 				$bookmark.remove();
 			}
 
-			$bookmark = $( '<span id="wysihat-bookmark">&nbsp;</span>' );
+			$bookmark = $( '<span id="WysiHat-bookmark">&nbsp;</span>' );
 
 			this.getRangeAt(0).insertNode( $bookmark.get(0) );
 		}
@@ -63,7 +63,7 @@
 		function moveToBookmark(element)
 		{
 			var
-			$bookmark	= $('#wysihat-bookmark'),
+			$bookmark	= $('#WysiHat-bookmark'),
 			range		= DOC.createRange();
 
 			if ( $bookmark.length > 0 )

@@ -7,10 +7,12 @@
  *--------------------------------------------------------------------------*/
 
 /**
- * == wysihat ==
+ * == WysiHat ==
 **/
 
-/** section: wysihat
+/** section: WysiHat
  * WysiHat
 **/
-var WysiHat = {};
+var WysiHat = {
+	name:	'WysiHat'
+};

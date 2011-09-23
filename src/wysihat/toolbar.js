@@ -1,6 +1,6 @@
 //= require "events/selection_change"
 
-/** section: wysihat
+/** section: WysiHat
  *  class WysiHat.Toolbar
 **/
 (function($){
@@ -169,7 +169,7 @@
 			$(element).click(function(){
 				handler(editor);
 				//event.stop();
-				$(document.activeElement).trigger( 'wysihat-selection:change' );
+				$(document.activeElement).trigger( 'WysiHat-selection:change' );
 				return false;
 			});
 		}
@@ -215,7 +215,7 @@
 		function observeStateChanges(element, name, handler)
 		{
 			var previousState;
-			editor.bind( "selection:change", function(){
+			editor.bind( 'WysiHat-selection:change', function(){
 				var state = handler(editor);
 				if (state != previousState)
 				{

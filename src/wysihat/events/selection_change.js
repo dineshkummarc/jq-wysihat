@@ -16,7 +16,7 @@ jQuery(document).ready(function(){
 			var
 			range	= DOC.selection.createRange(),
 			element	= range.parentElement();
-			$(element).trigger( 'wysihat-selection:change' );
+			$(element).trigger( 'WysiHat-selection:change' );
 		}
 
  		$doc.bind( 'selectionchange', selectionChangeHandler );
@@ -34,7 +34,7 @@ jQuery(document).ready(function(){
 				 elementTagName == 'input' )
 			{
 				previousRange = null;
-				$(element).trigger( 'wysihat-selection:change' );
+				$(element).trigger( 'WysiHat-selection:change' );
 			}
 			else
 			{
@@ -51,7 +51,7 @@ jQuery(document).ready(function(){
 					element = element.parentNode;
 				}
 
-				$(element).trigger( 'wysihat-selection:change' );
+				$(element).trigger( 'WysiHat-selection:change' );
 			}
 		};
 
