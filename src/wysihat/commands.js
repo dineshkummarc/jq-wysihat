@@ -499,19 +499,23 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function changeContentBlock( tagName )
 	{
+		console.log('changeContentBlock to '+tagName);
 		var
 		$editor		= $(this),
+		is_content	= WysiHat.Element.isContent,
 		selection	= WIN.getSelection(),
 		ranges		= selection.rangeCount,
 		$el;
-
+		console.log(ranges);
 		while ( ranges-- )
 		{
 			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer.parentElement );
-			while ( ! WysiHat.Element.isContent( $el ) )
+			while ( ! is_content( $el ) )
 			{
 				$el = $el.parent();
+				console.log( $el );
 			}
+			console.log( $el );
 			if ( $el.data('wysihat-replaced') == UNDEFINED )
 			{
 				$el = this.replaceElement( $el, tagName )
@@ -520,6 +524,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 
 		// cleanup
+		console.log( 'cleaning up' );
 		$editor
 			.children( tagName )
 				.each(function(){
@@ -579,7 +584,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		// sample: <h1><del><del>This is <em>a</em> test</del></del></h1>
 		var
 		selection	= WIN.getSelection(),
-		is_block	= WysiHat.Element.isContent,
+		isFormatter	= WysiHat.Element.isFormatter,
 		ranges		= selection.rangeCount,
 		range, $el, el, text, frag;
 
@@ -594,7 +599,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 				$el = $el.parent();
 			}
 			// check to see that we're as high up in the DOM as we need to be
-			if ( ! is_block( $el ) )
+			if ( isFormatter( $el ) )
 			{
 				if ( range.startOffset === 0 &&
 					 el.firstChild == range.startContainer &&
@@ -604,12 +609,12 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 					// element fully contains the selection
 					text = $el.text();
 					if ( $el.parent().text() == text &&
-					 	 ! is_block( $el.parent() ) )
+					 	 isFormatter( $el.parent() ) )
 					{
 						do {
 							$el = $el.parent();
 						} while ( $el.text() == text &&
-						 		  ! is_block( $el ) )
+						 		  isFormatter( $el ) )
 					}
 				}
 				else
