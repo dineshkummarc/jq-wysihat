@@ -19,8 +19,10 @@
 WysiHat.Commands = (function( WIN, DOC, $ ){
 	
 	var
+	TRUE			= true,
 	FALSE			= false,
 	NULL			= null,
+	UNDEFINED,
 	BOLD			= 'bold',
 	UNDERLINE		= 'underline',
 	ITALIC			= 'italic',
@@ -489,6 +491,143 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	}
 
 	/**
+	*  WysiHat.Commands#blockFormat( tagName ) -> undefined
+	*  - tagName (String): block tag to establish
+	*
+	*  swaps the current block for another block-level tag
+	**/
+	function changeContentBlock( tagName )
+	{
+		var
+		$editor		= $(this),
+		selection	= WIN.getSelection(),
+		ranges		= selection.rangeCount,
+		$el;
+
+		while ( ranges-- )
+		{
+			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer.parentElement );
+			while ( ! WysiHat.Formatting.isContentBlock( $el ) )
+			{
+				$el = $el.parent();
+			}
+			if ( $el.data('wysihat-replaced') == UNDEFINED )
+			{
+				$el = this.replaceElement( $el, tagName )
+						.data('wysihat-replaced',TRUE);
+			}
+		}
+
+		// cleanup
+		$editor
+			.children( tagName )
+				.each(function(){
+					$(this).removeData('wysihat-replaced');
+				});
+
+		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+	}
+
+	/**
+	*  WysiHat.Commands#unformatContentBlock() -> undefined
+	*
+	*  Returns the current content block to the default paragraph type
+	**/
+	function unformatContentBlock()
+	{
+		this.changeContentBlock('p');
+	}
+
+	/**
+	*  WysiHat.Commands#replaceElement( $el, tagName ) -> undefined
+	*  - $el (jQuery Object): $element to be replaced
+	*  - tagName (String): block tag to establish
+	*
+	*  swaps the current block for another block-level tag
+	**/
+	function replaceElement( $el, tagName )
+	{
+		var
+		old		= $el.get(0),
+		$new	= $('<'+tagName+'/>')
+					.html( $el.html() ),
+		
+		// copy attributes?
+		attrs	= old.attributes,
+		len		= attrs.length;
+		if ( len )
+		{
+			while ( len-- )
+			{
+				$new.attr( attrs[len].name, attrs[len].value );
+			}
+		}
+		
+		$el.replaceWith( $new );
+		
+		return $new;
+	}
+
+	/**
+	*  WysiHat.Commands#stripFormattingElements() -> undefined
+	*
+	*  Removes any elements classified as formatting elements
+	**/
+	function stripFormattingElements()
+	{
+		// sample: <h1><del><del>This is <em>a</em> test</del></del></h1>
+		var
+		selection	= WIN.getSelection(),
+		ranges		= selection.rangeCount,
+		range, $el, el, text, frag;
+
+		while ( ranges-- )
+		{
+			range	= selection.getRangeAt( ranges );
+			$el		= $( range.commonAncestorContainer );
+			el		= $el.get(0);
+			// make sure we're in an element, not a text node
+			if ( el.nodeType == 3 )
+			{
+				$el = $el.parent();
+			}
+			// check to see that we're as high up in the DOM as we need to be
+			if ( ! WysiHat.Formatting.isContentBlock( $el ) )
+			{
+				if ( range.startOffset === 0 &&
+					 el.firstChild == range.startContainer &&
+					 el.lastChild == range.endContainer &&
+					 range.endOffset === el.lastChild.length )
+				{
+					// element fully contains the selection
+					text = $el.text();
+					if ( $el.parent().text() == text &&
+					 	 ! WysiHat.Formatting.isContentBlock( $el.parent() ) )
+					{
+						do {
+							$el = $el.parent();
+						} while ( $el.text() == text &&
+						 		  ! WysiHat.Formatting.isContentBlock( $el ) )
+					}
+				}
+				else
+				{
+					$el.replaceWith( $el.text() );
+					$el = null;
+				}
+			}
+			
+			if ( $el )
+			{
+				$el.html( $el.text() );
+			}
+			
+		}
+
+		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
+	}
+	
+	/**
 	*  WysiHat.Commands#queryCommandState(state) -> Boolean
 	*  - state (String): bold, italic, underline, etc
 	*
@@ -564,6 +703,10 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		insertImage:				insertImage,
 		insertHTML:					insertHTML,
 		wrapHTML:					wrapHTML,
+		changeContentBlock:			changeContentBlock,
+		unformatContentBlock:		unformatContentBlock,
+		replaceElement:				replaceElement,
+		stripFormattingElements:	stripFormattingElements,
 		execCommand:				execCommand,
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
