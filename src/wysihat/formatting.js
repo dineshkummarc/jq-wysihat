@@ -1,3 +1,5 @@
+//= require "./element"
+
 WysiHat.Formatting = (function($){
 
 	var
@@ -317,28 +319,31 @@ WysiHat.Formatting = (function($){
 
 			function cleanup()
 			{
-				var html = $container.html()
-								.replace( /<\/?[\w]+/g, function(tag){
-									return tag.toLowerCase();
-								 })
-								//.replace('</div><div><br></div><div>','</p><p>')
-								//.replace('<br></div><div>','<br>')
-								//.replace('</div><div>','</p><p>')
-								//.replace('<br></div>','</p>')
-								//.replace('<div>','<p>')
-								//.replace('</div>','</p>')
-								.replace('<p>&nbsp;</p>','')
-								// Fancy formatting
-									.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
-								.replace(/\n+/,'\n')
-								.replace(/<p>\n+<\/p>/,'');
+				var
+				replaceElement = WysiHat.Commands.replaceElement,
+				html = $container.html()
+							.replace( /<\/?[\w]+/g, function(tag){
+								return tag.toLowerCase();
+							 })
+							//.replace('</div><div><br></div><div>','</p><p>')
+							//.replace('<br></div><div>','<br>')
+							//.replace('</div><div>','</p><p>')
+							//.replace('<br></div>','</p>')
+							//.replace('<div>','<p>')
+							//.replace('</div>','</p>')
+							.replace('<p>&nbsp;</p>','')
+							// Fancy formatting
+								.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
+							.replace(/\n+/,'\n')
+							.replace(/<p>\n+<\/p>/,'');
+				
 				$container.html( html );
 				$container
 					.find('b').each(function(){
-						WysiHat.Commands.replaceElement($(this),'strong');
+						replaceElement($(this),'strong');
 					 }).end()
 					.find('i').each(function(){
-						WysiHat.Commands.replaceElement($(this),'em');
+						replaceElement($(this),'em');
 					 }).end()
 					.find('p:empty').remove()
 					;
@@ -349,12 +354,8 @@ WysiHat.Formatting = (function($){
 			//flush();
 			cleanup();
 			return $container.html();
-		},
-		
-		isContentBlock: function( $el )
-		{
-			return $el.is('h1,h2,h3,h4,h5,h6,div,p,figcaption');
 		}
+		
 	};
 
 })(jQuery);

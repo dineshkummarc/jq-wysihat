@@ -16,6 +16,7 @@
 //= require "./wysihat/events/frame_loaded"
 //= require "./wysihat/events/selection_change"
 //
+//= require "./wysihat/element"
 //= require "./wysihat/formatting"
 //
 //= require "./wysihat/toolbar"

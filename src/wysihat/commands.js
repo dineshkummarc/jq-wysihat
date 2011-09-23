@@ -1,3 +1,4 @@
+//= require "./element"
 //= require "./dom/selection"
 //= require "./events/field_change"
 
@@ -507,7 +508,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		while ( ranges-- )
 		{
 			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer.parentElement );
-			while ( ! WysiHat.Formatting.isContentBlock( $el ) )
+			while ( ! WysiHat.Element.isContent( $el ) )
 			{
 				$el = $el.parent();
 			}
@@ -578,6 +579,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		// sample: <h1><del><del>This is <em>a</em> test</del></del></h1>
 		var
 		selection	= WIN.getSelection(),
+		is_block	= WysiHat.Element.isContent,
 		ranges		= selection.rangeCount,
 		range, $el, el, text, frag;
 
@@ -592,7 +594,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 				$el = $el.parent();
 			}
 			// check to see that we're as high up in the DOM as we need to be
-			if ( ! WysiHat.Formatting.isContentBlock( $el ) )
+			if ( ! is_block( $el ) )
 			{
 				if ( range.startOffset === 0 &&
 					 el.firstChild == range.startContainer &&
@@ -602,12 +604,12 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 					// element fully contains the selection
 					text = $el.text();
 					if ( $el.parent().text() == text &&
-					 	 ! WysiHat.Formatting.isContentBlock( $el.parent() ) )
+					 	 ! is_block( $el.parent() ) )
 					{
 						do {
 							$el = $el.parent();
 						} while ( $el.text() == text &&
-						 		  ! WysiHat.Formatting.isContentBlock( $el ) )
+						 		  ! is_block( $el ) )
 					}
 				}
 				else
@@ -616,12 +618,10 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 					$el = null;
 				}
 			}
-			
 			if ( $el )
 			{
 				$el.html( $el.text() );
 			}
-			
 		}
 
 		$(DOC.activeElement).trigger( 'wysihat-editor:change' );
