@@ -309,17 +309,17 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		var
 		selection	= WIN.getSelection(),
-		node		= selection.getNode();
+		$node		= $( selection.getNode() );
 
 		if ( this.orderedListSelected() &&
-			 ! node.is("ol li:last-child, ol li:last-child *") )
+			 ! $node.is( 'ol li:last-child, ol li:last-child *' ) )
 		{
-			selection.selectNode(node.parent(OL));
+			selection.selectNode( $node.parent(OL) );
 		}
 		else if ( this.unorderedListSelected() )
 		{
 			// Toggle list type
-			selection.selectNode(node.parent(UL));
+			selection.selectNode( $node.parent(UL) );
 		}
 		this.execCommand('insertorderedlist', FALSE, NULL);
 	}
@@ -341,10 +341,11 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function orderedListSelected()
 	{
-		var element = WIN.getSelection().getNode();
-		if (element)
+		var $el = $( WIN.getSelection().getNode() );
+		if ( $el.length )
 		{
-			return element.is('*[contenteditable=""] ol, *[contenteditable=true] ol, *[contenteditable=""] ol *, *[contenteditable=true] ol *');
+			return $el.is( '*[contenteditable=""] ol, *[contenteditable=true] ol, ' +
+			               '*[contenteditable=""] ol *, *[contenteditable=true] ol *' );
 		}
 		return FALSE;
 	}
@@ -502,31 +503,38 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	function changeContentBlock( tagName )
 	{
 		var
-		$editor		= $(this),
-		is_content	= WysiHat.Element.isContent,
 		selection	= WIN.getSelection(),
 		ranges		= selection.rangeCount,
 		$el;
+		
+		// we need to do it up custom
 		while ( ranges-- )
 		{
-			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer.parentElement );
-			while ( ! is_content( $el ) )
+			// find the closest block element
+			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer )
+					.closest( 
+						WysiHat.Element.getContentElements()
+							.join(',')
+							.replace( ',div,', ',div:not(.WysiHat-editor),' )
+					 );
+			if ( WysiHat.Element.isHTML4Block( $el ) &&
+			 	 WysiHat.Element.isHTML4Block( $('<'+tagName+'/>') ) )
 			{
-				$el = $el.parent();
+				// we can handle it using the native stuff
+				this.formatblockSelection( tagName );
 			}
-			if ( $el.data('WysiHat-replaced') == UNDEFINED )
+			else if ( $el.data('WysiHat-replaced') == UNDEFINED )
 			{
 				$el = this.replaceElement( $el, tagName )
 						.data('WysiHat-replaced',TRUE);
 			}
 		}
-
 		// cleanup
-		$editor
+		$(this)
 			.children( tagName )
 				.each(function(){
 					$(this).removeData('WysiHat-replaced');
-				});
+				 });
 
 		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
 	}
