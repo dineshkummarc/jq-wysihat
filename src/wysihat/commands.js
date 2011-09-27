@@ -29,7 +29,9 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	ITALIC			= 'italic',
 	STRIKETHROUGH	= 'strikethrough',
 	OL				= 'ol',
-	UL				= 'ul';
+	UL				= 'ul',
+	WYSIHAT_EDITOR	= 'WysiHat-editor',
+	CHANGE_EVT		= WYSIHAT_EDITOR + ':change';
 	
 	/**
 	*  WysiHat.Commands#boldSelection() -> undefined
@@ -290,11 +292,11 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	*    with (like 'h1' or 'p').
 	*
 	*  Wraps the current selection in a header or paragraph.
-	**/
-	function formatblockSelection(element)
-	{
-		this.execCommand('formatblock', FALSE, element);
-	}
+	*
+	*function formatblockSelection(element)
+	*{
+	*	this.execCommand('formatblock', FALSE, element);
+	*}*/
 
 	/**
 	*  WysiHat.Commands#toggleOrderedList() -> undefined
@@ -460,7 +462,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			}
 			catch(e) { return NULL; }
 		}
-		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
+		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
 	
 	/**
@@ -492,7 +494,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			range.surroundContents( el.get(0) );
 			// ToDo: update the range
 		}
-		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
+		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
 
 	/**
@@ -503,6 +505,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function changeContentBlock( tagName )
 	{
+		// Sample:
 		// <h1>This is a test</h2>
 		// <p><img src="http://easy-designs.net/img/logo.png" alt=""/></p>
 		
@@ -510,50 +513,32 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		selection	= WIN.getSelection(),
 		editor		= this,
 		$editor		= $(editor),
-		edit_class	= '.WysiHat-editor',
-		replace		= 'WysiHat-replaced',
-		blocks		= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.WysiHat-editor),' ),
-		ranges		= selection.rangeCount,
-		range, $from, $to, $els;
+		replaced	= 'WysiHat-replaced',
+		i			= selection.rangeCount,
+		ranges		= [],
+		range;
 		
-		while ( ranges-- )
+		while ( i-- )
 		{
-			// get the range
-			range	= selection.getRangeAt( ranges );
-			
-			// find the start and end of the range
-			$from	= $( range.startContainer ).closest( blocks );
-			$to		= $( range.endContainer ).closest( blocks );
-			$els	= $from;
-			
-			// figure out the elements to collect
-			if ( ! $from.filter( $to ).length )
-			{
-				if ( $from.nextAll().filter( $to ).length )
-				{
-					$els = $from.nextUntil( $to ).andSelf().add( $to );
-				}
-				else
-				{
-					$els = $from.prevUntil( $to ).andSelf().add( $to );
-				}
-			}
+			range	= selection.getRangeAt( i );
+			ranges.push( range );
 
 			// update as necessary
-			$els.each(function(){
+			this.getRangeElements( range )
+				.each(function(){
 					editor.replaceElement( $(this), tagName );
 				 })
-				.data( replace, TRUE );
+				.data( replaced, TRUE );
 			
 		}
 		// cleanup
 		$editor
 			.children( tagName )
-				.each(function(){
-					$(this).removeData( replace );
-				 });
+				.removeData( replaced );
 
-		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
+		$(DOC.activeElement).trigger( CHANGE_EVT );
+
+		this.reapplyRanges( ranges );
 	}
 
 	/**
@@ -576,11 +561,11 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	function replaceElement( $el, tagName )
 	{
 		// don't change the editor EVER!
-		if ( $el.is('.WysiHat-editor') )
+		if ( $el.is( '.' + WYSIHAT_EDITOR ) )
 		{
 			return;
 		}
-		console.log( 'converting', $el, 'to', tagName );
+
 		var
 		old		= $el.get(0),
 		$new	= $('<'+tagName+'/>')
@@ -609,59 +594,42 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function stripFormattingElements()
 	{
-		// sample: <h1><del><del>This is <em>a</em> test</del></del></h1>
+		// Sample:
+		// <h1>This is <em><del>a</del></em> test</h1>
+		// <h2>This is <strong>not</strong> a test</h2>
+		// <h2><img src="http://easy-designs.net/img/logo.png" alt=""></h2>
+		// <h2>This is a <em>test</em></h2>
+
+		function stripFormatters( i, el )
+		{
+			var $el = $(el);
+
+			// clean children first
+			$el.children().each(stripFormatters);
+
+			if ( isFormatter( $el ) )
+			{
+				$el.replaceWith( $el.html() );
+			}
+		}
+		
 		var
 		selection	= WIN.getSelection(),
 		isFormatter	= WysiHat.Element.isFormatter,
-		ranges		= selection.rangeCount,
-		range, $el, el, text, frag;
+		i			= selection.rangeCount,
+		ranges		= [],
+		range;
 
-		while ( ranges-- )
+		while ( i-- )
 		{
-			range	= selection.getRangeAt( ranges );
-			$el		= $( range.commonAncestorContainer );
-			el		= $el.get(0);
-			
-			// make sure we're in an element, not a text node
-			if ( el.nodeType == 3 )
-			{
-				$el = $el.parent();
-			}
-			
-			// check to see that we're as high up in the DOM as we need to be
-			if ( isFormatter( $el ) )
-			{
-				if ( range.startOffset === 0 &&
-					 el.firstChild == range.startContainer &&
-					 el.lastChild == range.endContainer &&
-					 range.endOffset === el.lastChild.length )
-				{
-					text = $el.text();
-					if ( $el.parent().text() == text &&
-					 	 isFormatter( $el.parent() ) )
-					{
-						do {
-							$el = $el.parent();
-						} while ( $el.text() == text &&
-						 		  isFormatter( $el ) )
-					}
-				}
-			}
-			
-			// don't adjust the editor
-			$el.find('*')
-				.andSelf()
-				.not('.WysiHat-editor')
-				.each(function(){
-					var $this = $(this);
-					if ( isFormatter( $this ) )
-					{
-						$this.replaceWith( $this.html() );
-					}
-				});
+			range = selection.getRangeAt( i );
+			ranges.push( range );
+			this.getRangeElements( range ).each( stripFormatters );
 		}
 
-		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
+		$(DOC.activeElement).trigger( CHANGE_EVT );
+		
+		this.reapplyRanges( ranges );
 	}
 	
 	/**
@@ -709,6 +677,53 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		return styles;
 	}
 	
+	/**
+	*  WysiHat.Commands#getRangeElements(range) -> collection
+	*  - range (Range): the range to find the elements within
+	* 
+	*  Fetches a collection of elements within a given Range and returns a jQuery object
+	**/
+	function getRangeElements( range )
+	{
+		var
+		blocks	= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.' + WYSIHAT_EDITOR + '),' ),
+		
+		// find the start and end of the range
+		$from	= $( range.startContainer ).closest( blocks ),
+		$to		= $( range.endContainer ).closest( blocks ),
+		$els	= $from;
+		
+		// figure out the elements to collect
+		if ( ! $from.filter( $to ).length )
+		{
+			if ( $from.nextAll().filter( $to ).length )
+			{
+				$els = $from.nextUntil( $to ).andSelf().add( $to );
+			}
+			else
+			{
+				$els = $from.prevUntil( $to ).andSelf().add( $to );
+			}
+		}
+		
+		return $els;
+	}
+	
+	function reapplyRanges( ranges )
+	{
+		var
+		selection = WIN.getSelection(),
+		i = ranges.length;
+		
+		selection.removeAllRanges();
+		while ( i-- )
+		{
+			selection.addRange( ranges[i] );
+		}
+	}
+	
+	
+	
 	return {
 		boldSelection:				boldSelection,
 		boldSelected:				boldSelected,
@@ -746,6 +761,8 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		execCommand:				execCommand,
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
+		getRangeElements:			getRangeElements,
+		reapplyRanges:				reapplyRanges,
 
 		commands: {},
 
