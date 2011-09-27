@@ -284,7 +284,8 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	}
 
 	/**
-	*  WysiHat.Commands#formatblockSelection(element) -> undefined
+	* DEPRECATED 
+	* WysiHat.Commands#formatblockSelection(element) -> undefined
 	*  - element (String): the type of element you want to wrap your selection
 	*    with (like 'h1' or 'p').
 	*
@@ -502,38 +503,54 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function changeContentBlock( tagName )
 	{
+		// <h1>This is a test</h2>
+		// <p><img src="http://easy-designs.net/img/logo.png" alt=""/></p>
+		
 		var
 		selection	= WIN.getSelection(),
+		editor		= this,
+		$editor		= $(editor),
+		edit_class	= '.WysiHat-editor',
+		replace		= 'WysiHat-replaced',
+		blocks		= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.WysiHat-editor),' ),
 		ranges		= selection.rangeCount,
-		$el;
+		range, $from, $to, $els;
 		
-		// we need to do it up custom
 		while ( ranges-- )
 		{
-			// find the closest block element
-			$el = $( selection.getRangeAt( ranges ).commonAncestorContainer )
-					.closest( 
-						WysiHat.Element.getContentElements()
-							.join(',')
-							.replace( ',div,', ',div:not(.WysiHat-editor),' )
-					 );
-			if ( WysiHat.Element.isHTML4Block( $el ) &&
-			 	 WysiHat.Element.isHTML4Block( $('<'+tagName+'/>') ) )
+			// get the range
+			range	= selection.getRangeAt( ranges );
+			
+			// find the start and end of the range
+			$from	= $( range.startContainer ).closest( blocks );
+			$to		= $( range.endContainer ).closest( blocks );
+			$els	= $from;
+			
+			// figure out the elements to collect
+			if ( ! $from.filter( $to ).length )
 			{
-				// we can handle it using the native stuff
-				this.formatblockSelection( tagName );
+				if ( $from.nextAll().filter( $to ).length )
+				{
+					$els = $from.nextUntil( $to ).andSelf().add( $to );
+				}
+				else
+				{
+					$els = $from.prevUntil( $to ).andSelf().add( $to );
+				}
 			}
-			else if ( $el.data('WysiHat-replaced') == UNDEFINED )
-			{
-				$el = this.replaceElement( $el, tagName )
-						.data('WysiHat-replaced',TRUE);
-			}
+
+			// update as necessary
+			$els.each(function(){
+					editor.replaceElement( $(this), tagName );
+				 })
+				.data( replace, TRUE );
+			
 		}
 		// cleanup
-		$(this)
+		$editor
 			.children( tagName )
 				.each(function(){
-					$(this).removeData('WysiHat-replaced');
+					$(this).removeData( replace );
 				 });
 
 		$(DOC.activeElement).trigger( 'WysiHat-editor:change' );
@@ -563,7 +580,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			return;
 		}
-		
+		console.log( 'converting', $el, 'to', tagName );
 		var
 		old		= $el.get(0),
 		$new	= $('<'+tagName+'/>')
@@ -713,7 +730,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		linkSelection:				linkSelection,
 		unlinkSelection:			unlinkSelection,
 		linkSelected:				linkSelected,
-		formatblockSelection:		formatblockSelection,
 		toggleOrderedList:			toggleOrderedList,
 		insertOrderedList:			insertOrderedList,
 		orderedListSelected:		orderedListSelected,
