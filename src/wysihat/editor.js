@@ -6,10 +6,12 @@
 	var
 	WYSIHAT 	= WysiHat.name,
 	EDITOR		= '-editor',
+	FIELD		= '-field',
+	CHANGE		= ':change',
 	CLASS		= WYSIHAT + EDITOR,
 	ID			= 'id',
-	E_EVT		= WYSIHAT + '-editor:change',
-	F_EVT		= WYSIHAT + '-field:change',
+	E_EVT		= CLASS + CHANGE,
+	F_EVT		= WYSIHAT + FIELD + CHANGE,
 	IMMEDIATE	= ':immediate',
 	
 	INDEX		= 0,
@@ -17,82 +19,84 @@
 	EMPTY		= '';
 	
 	WysiHat.Editor = {
+		
 		/** section: WysiHat
-		 *  WysiHat.Editor.attach(textarea) -> undefined
-		 *  - $textarea (jQuery): a jQuery wrapped textarea that you want to convert 
+		 *  WysiHat.Editor.attach($field) -> undefined
+		 *  - $field (jQuery): a jQuery wrapped field that you want to convert 
 		 * to a rich-text field.
 		 *
 		 *  Creates a new editor for the textarea.
 		**/
-		attach: function($textarea)
+		attach: function( $field )
 		{
+			
 			var
-			t_id = $textarea.attr( ID ),
-			e_id = ( t_id != EMPTY ? t_id : WYSIHAT + INDEX++ ) + EDITOR,
-			$editArea = $( '#' + e_id ),
-			fTimer = NULL,
-			eTimer = NULL;
+			t_id	= $field.attr( ID ),
+			e_id	= ( t_id != EMPTY ? t_id : WYSIHAT + INDEX++ ) + EDITOR,
+			fTimer	= NULL,
+			eTimer	= NULL,
+			$editor	= $( '#' + e_id );
 			
 			if ( t_id == EMPTY )
 			{
-				t_id = e_id.replace( EDITOR );
-				$textarea.attr( ID, t_id );
+				t_id = e_id.replace( EDITOR, FIELD );
+				$field.attr( ID, t_id );
 			}
 		
-			if ( $editArea.length )
+			if ( $editor.length )
 			{
-				if ( ! $editArea.hasClass( CLASS ) )
+				if ( ! $editor.hasClass( CLASS ) )
 				{
-					$editArea.addClass( CLASS );
+					$editor.addClass( CLASS );
 				}
-				return $editArea;
+				return $editor;
 			}
-			
-			$editArea = $('<div id="' + e_id + '" class="' + CLASS + '" contentEditable="true"></div>')
-							.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
-							
-			//console.log($editArea);
+			else
+			{
+				$editor = $('<div id="' + e_id + '" class="' + CLASS + '" contentEditable="true" role="application"></div>')
+									.html( WysiHat.Formatting.getBrowserMarkupFrom( $field ) )
+									.data( 'field', $field );
 
-			$.extend($editArea, WysiHat.Commands);
+				$.extend( $editor, WysiHat.Commands );
 
-			//console.log($editArea);
+				$field
+					.data( 'editor', $editor )
+					.bind( F_EVT, function(){
+						if ( this.fTimer )
+						{
+							clearTimeout( this.fTimer );
+						}
+						this.fTimer = setTimeout(updateEditor, 500 );
+					 })
+					.bind( F_EVT + IMMEDIATE, updateEditor )
+					.hide()
+					.before(
+						$editor
+							.bind( E_EVT, function(){
+								if ( this.eTimer )
+								{
+									clearTimeout( this.eTimer );
+								}
+								this.eTimer = setTimeout(updateField, 500 );
+							 })
+							.bind( E_EVT + IMMEDIATE, updateField )
+					 );
 
-			$textarea
-				.bind( F_EVT, function(){
-					if ( this.fTimer )
-					{
-						clearTimeout( this.fTimer );
-					}
-					this.fTimer = setTimeout(updateEditor, 500 );
-				 })
-				.bind( F_EVT + IMMEDIATE, updateEditor )
-				.hide()
-				.before(
-					$editArea
-						.bind( E_EVT, function(){
-							if ( this.eTimer )
-							{
-								clearTimeout( this.eTimer );
-							}
-							this.eTimer = setTimeout(updateField, 500 );
-						 })
-						.bind( E_EVT + IMMEDIATE, updateField )
-				 );
+				function updateField()
+				{
+					$field.val( WysiHat.Formatting.getApplicationMarkupFrom( $editor ) );
+					this.fTimer = null;
+				}
+				function updateEditor()
+				{
+					$editor.html( WysiHat.Formatting.getBrowserMarkupFrom( $field ) );
+					this.eTimer = null;
+				}
+			}
 
 			//WysiHat.BrowserFeatures.run();
 			
-			function updateField()
-			{
-				$textarea.val( WysiHat.Formatting.getApplicationMarkupFrom( $editArea ) );
-				this.fTimer = null;
-			}
-			function updateEditor()
-			{
-				$editArea.html( WysiHat.Formatting.getBrowserMarkupFrom( $textarea ) );
-				this.eTimer = null;
-			}
-			
-			return $editArea;
+			return $editor;
 		}
 	};
 	

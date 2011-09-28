@@ -8,17 +8,12 @@
 	WysiHat.Toolbar = function()
 	{
 		var
-		editor,
-		element;
+		$editor,
+		$toolbar;
 
 		/**
-		*  new WysiHat.Toolbar(ed)
-		*  - ed (WysiHat.Editor): the editor object that you want to attach to.
-		*
-		*  This was renamed from 'editor' in the original wysihat code, since I 
-		*  had to add a class level 'editor' object, causing a conflict with the 
-		*  names.
-		*
+		*  new WysiHat.Toolbar()
+		* 
 		*  Creates a toolbar element above the editor. The WysiHat.Toolbar object
 		*  has many helper methods to easily add buttons to the toolbar.
 		*
@@ -28,12 +23,12 @@
 		*  it is highly recommended that you subclass it and override methods
 		*  to add custom functionality.
 		**/
-		function initialize(ed)
+		function initialize( $el )
 		{
-			editor	= ed;
-			element	= createToolbarElement();
+			$editor	= $el;
+			createToolbarElement();
 		}
-
+		
 		/**
 		*  WysiHat.Toolbar#createToolbarElement() -> Element
 		*
@@ -47,10 +42,8 @@
 		**/
 		function createToolbarElement()
 		{
-			var
-			toolbar = $('<div class="editor_toolbar"></div>');
-			editor.before(toolbar);
-			return toolbar;
+			$toolbar = $('<div class="editor_toolbar" role="presentation"></div>')
+							.insertBefore( $editor );
 		}
 
 		/**
@@ -90,8 +83,9 @@
 		*  Would create a link,
 		*  "<a href='#' class='button bold'><span>Bold</span></a>"
 		**/
-		function addButton(options, handler) {
-			var name, button, handler;
+		function addButton( options, handler )
+		{
+			var name, button;
 			
 			if ( ! options['name'] )
 			{
@@ -99,13 +93,17 @@
 			}
 			name = options['name'];
 
-			button = createButtonElement(element, options);
+			$button = createButtonElement( $toolbar, options );
 
-			handler = buttonHandler(name, options);
-			observeButtonClick(button, handler);
+			if ( handler )
+			{
+				options['handler'] = handler;
+			}
+			handler = buttonHandler( name, options );
+			observeButtonClick( $button, handler );
 
-			handler = buttonStateHandler(name, options);
-			observeStateChanges(button, name, handler);
+			handler = buttonStateHandler( name, options );
+			observeStateChanges( $button, name, handler );
 		}
 
 		/**
@@ -114,19 +112,31 @@
 		*  - options (Hash): Options hash that pass from addButton
 		*
 		*  Creates individual button elements and inserts them into the toolbar
-		*  container. The default elements are 'a' tags with a 'button' class.
-		*
-		*  You can override this method to customize the element attributes and
-		*  insert positions. Be sure to return the element after it has been
-		*  inserted.
+		*  container. The default elements are 'button' tags with ARIA roles.
 		**/
-		function createButtonElement(toolbar, options)
+		function createButtonElement( $toolbar, options )
 		{
-			return $('<a class="" href="#"><span>' + options['label'] + '</span></a>')
-						.addClass("button")
-						.addClass(options['name'])
-						.addClass(options['cssClass'])
-						.appendTo(toolbar);
+			var $btn = $('<a role="button" aria-pressed="false" href="#" tabindex="-1"><span>' + options['label'] + '</span></a>')
+							.addClass( 'button ' + options['name'] )
+							.appendTo( $toolbar );
+			
+			if ( options['cssClass'] )
+			{
+				$btn.addClass( options['cssClass'] );
+			}
+			
+			if ( options['title'] )
+			{
+				$btn.attr('title',options['title']);
+			}
+			
+			if ( options['toggle-text'] )
+			{
+				$btn.data( 'toggle-text', options['toggle-text'] );
+			}
+			
+			return $btn;
+						
 		}
 
 		/**
@@ -138,7 +148,7 @@
 		*  event. It checks the options for a 'handler' attribute otherwise it
 		*  defaults to a function that calls execCommand with the button name.
 		**/
-		function buttonHandler(name, options)
+		function buttonHandler( name, options )
 		{
 			if (options.handler)
 			{
@@ -150,26 +160,26 @@
 			}
 			else
 			{
-				return function(editor)
+				return function( $editor )
 				{
-					editor.execCommand(name);
+					$editor.execCommand(name);
 				};
 			}
 		}
 
 		/**
 		*  WysiHat.Toolbar#observeButtonClick(element, handler) -> undefined
-		*  - element (Element): Button element
+		*  - $button (jQuery): Button element
 		*  - handler (Function): Handler function to bind to element
 		*
 		*  Bind handler to elements onclick event.
 		**/
-		function observeButtonClick(element, handler)
+		function observeButtonClick( $button, handler )
 		{
-			$(element).click(function(){
-				handler(editor);
+			$button.click(function(e){
+				handler( $editor, e );
 				//event.stop();
-				$(document.activeElement).trigger( 'WysiHat-selection:change' );
+				$( document.activeElement ).trigger( 'WysiHat-selection:change' );
 				return false;
 			});
 		}
@@ -184,7 +194,7 @@
 		*  'query' attribute otherwise it defaults to a function that calls
 		*  queryCommandState with the button name.
 		**/
-		function buttonStateHandler(name, options)
+		function buttonStateHandler( name, options )
 		{
 			if (options.query)
 			{
@@ -196,38 +206,38 @@
 			}
 			else
 			{
-				return function(editor)
+				return function( $editor )
 				{
-					return editor.queryCommandState(name);
+					return $editor.queryCommandState(name);
 				};
 			}
 		}
 
 		/**
-		*  WysiHat.Toolbar#observeStateChanges(element, name, handler) -> undefined
-		*  - element (Element): Button element
+		*  WysiHat.Toolbar#observeStateChanges($element, name, handler) -> undefined
+		*  - $button (jQuery): Button element
 		*  - name (String): Button name
 		*  - handler (Function): State query function
 		*
 		*  Determines buttons state by calling the query handler function then
 		*  calls updateButtonState.
 		**/
-		function observeStateChanges(element, name, handler)
+		function observeStateChanges( $button, name, handler )
 		{
 			var previousState;
-			editor.bind( 'WysiHat-selection:change', function(){
-				var state = handler(editor);
+			$editor.bind( 'WysiHat-selection:change', function(){
+				var state = handler( $editor );
 				if (state != previousState)
 				{
 					previousState = state;
-					updateButtonState(element, name, state);
+					updateButtonState( $button, name, state );
 				}
 			});
 		}
 
 		/**
 		*  WysiHat.Toolbar#updateButtonState(element, name, state) -> undefined
-		*  - element (Element): Button element
+		*  - $button (jQuery): Button element
 		*  - name (String): Button name
 		*  - state (Boolean): Whether button state is on/off
 		*
@@ -237,15 +247,19 @@
 		*  You can override this method to change the class name or styles
 		*  applied to buttons when their state changes.
 		**/
-		function updateButtonState(elem, name, state)
+		function updateButtonState( $button, name, state )
 		{
-			if (state)
+			if ( state )
 			{
-				$(elem).addClass('selected');
+				$button
+					.addClass('selected')
+					.attr('aria-pressed','true');
 			}
 			else
 			{
-				$(elem).removeClass('selected');
+				$button
+					.removeClass('selected')
+					.attr('aria-pressed','false');
 			}
 		}
 

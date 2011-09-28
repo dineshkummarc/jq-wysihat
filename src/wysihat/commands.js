@@ -31,7 +31,14 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	OL				= 'ol',
 	UL				= 'ul',
 	WYSIHAT_EDITOR	= 'WysiHat-editor',
-	CHANGE_EVT		= WYSIHAT_EDITOR + ':change';
+	CHANGE_EVT		= WYSIHAT_EDITOR + ':change',
+	
+	native_cmds		= [ 'backColor', 'bold', 'createLink', 'fontName', 'fontSize', 'foreColor', 'hiliteColor', 
+						'italic', 'removeFormat', 'strikethrough', 'subscript', 'superscript', 'underline', 'unlink',
+						'delete', 'formatBlock', 'forwardDelete', 'indent', 'insertHorizontalRule', 'insertHTML', 
+						'insertImage', 'insertLineBreak', 'insertOrderedList', 'insertParagraph', 'insertText', 
+						'insertUnorderedList', 'justifyCenter', 'justifyFull', 'justifyLeft', 'justifyRight', 'outdent',
+						'copy', 'cut', 'paste', 'selectAll', 'styleWithCSS', 'useCSS' ];
 	
 	/**
 	*  WysiHat.Commands#boldSelection() -> undefined
@@ -538,7 +545,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 
 		$(DOC.activeElement).trigger( CHANGE_EVT );
 
-		this.reapplyRanges( ranges );
+		this.restoreRanges( ranges );
 	}
 
 	/**
@@ -629,7 +636,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 
 		$(DOC.activeElement).trigger( CHANGE_EVT );
 		
-		this.reapplyRanges( ranges );
+		this.restoreRanges( ranges );
 	}
 	
 	/**
@@ -709,7 +716,13 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		return $els;
 	}
 	
-	function reapplyRanges( ranges )
+	/**
+	*  WysiHat.Commands#restoreRanges(ranges) -> undefined
+	*  - ranges (Array): an array of Range objects to be re-established
+	* 
+	*  Restores previously selected ranges
+	**/
+	function restoreRanges( ranges )
 	{
 		var
 		selection = WIN.getSelection(),
@@ -722,6 +735,55 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 	}
 	
+	/**
+	*  WysiHat.Commands#toggleHTML( e ) -> undefined
+	*  - e (Event): the click event
+	* 
+	*  Toggles the visibility of the HTML produced
+	**/
+	function toggleHTML( e )
+	{
+		var 
+		HTML	= FALSE,
+		$editor	= $(this),
+		$target	= $( e.target ),
+		text	= $target.text(),
+		$btn	= $target.closest( 'a[role=button]' ),
+		$field	= $editor.data('field'),
+		$tools	= $btn.siblings();
+		
+		if ( $btn.data('toggle-text') == UNDEFINED )
+		{
+			$btn.data('toggle-text','View Content');
+		}
+
+		this.toggleHTML = function()
+		{
+			if ( ! HTML )
+			{
+				$btn.find('span').text($btn.data('toggle-text'));
+				$tools.hide();
+				$editor.trigger('WysiHat-editor:change:immediate').hide();
+				$field.show();
+			}
+			else
+			{
+				$btn.find('span').text(text);
+				$tools.show();
+				$field.trigger('WysiHat-field:change:immediate').hide();
+				$editor.show();
+			}
+			HTML = ! HTML;
+		};
+		
+		this.toggleHTML();
+	}
+	
+	
+	function isNativeCommand( cmd )
+	{
+		return ( $.inArray( cmd, native_cmds ) > -1 );
+	}
 	
 	
 	return {
@@ -762,7 +824,9 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
 		getRangeElements:			getRangeElements,
-		reapplyRanges:				reapplyRanges,
+		restoreRanges:				restoreRanges,
+		toggleHTML:					toggleHTML,
+		isNativeCommand:			isNativeCommand,
 
 		commands: {},
 
