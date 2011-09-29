@@ -150,21 +150,19 @@
 		**/
 		function buttonHandler( name, options )
 		{
-			if (options.handler)
+			var handler = function(){};
+			if ( options['handler'] )
 			{
-				return options.handler;
+				handler = options['handler'];
 			}
-			else if (options['handler'])
+			else if ( WysiHat.Commands.isValidCommand( name ) )
 			{
-				return options['handler'];
-			}
-			else
-			{
-				return function( $editor )
+				handler = function( $editor )
 				{
-					$editor.execCommand(name);
+					return $editor.execCommand(name);
 				};
 			}
+			return handler;
 		}
 
 		/**
@@ -196,21 +194,19 @@
 		**/
 		function buttonStateHandler( name, options )
 		{
-			if (options.query)
+			var handler = function(){};
+			if ( options['query'] )
 			{
-				return options.query;
+				handler = options['query'];
 			}
-			else if (options['query'])
+			else if ( WysiHat.Commands.isValidCommand( name ) )
 			{
-				return options['query'];
-			}
-			else
-			{
-				return function( $editor )
+				handler = function( $editor )
 				{
 					return $editor.queryCommandState(name);
 				};
 			}
+			return handler;
 		}
 
 		/**

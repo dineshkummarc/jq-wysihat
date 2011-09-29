@@ -24,21 +24,19 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	FALSE			= false,
 	NULL			= null,
 	UNDEFINED,
-	BOLD			= 'bold',
-	UNDERLINE		= 'underline',
-	ITALIC			= 'italic',
-	STRIKETHROUGH	= 'strikethrough',
 	OL				= 'ol',
 	UL				= 'ul',
 	WYSIHAT_EDITOR	= 'WysiHat-editor',
 	CHANGE_EVT		= WYSIHAT_EDITOR + ':change',
 	
-	native_cmds		= [ 'backColor', 'bold', 'createLink', 'fontName', 'fontSize', 'foreColor', 'hiliteColor', 
+	valid_cmds		= [ 'backColor', 'bold', 'createLink', 'fontName', 'fontSize', 'foreColor', 'hiliteColor', 
 						'italic', 'removeFormat', 'strikethrough', 'subscript', 'superscript', 'underline', 'unlink',
 						'delete', 'formatBlock', 'forwardDelete', 'indent', 'insertHorizontalRule', 'insertHTML', 
 						'insertImage', 'insertLineBreak', 'insertOrderedList', 'insertParagraph', 'insertText', 
 						'insertUnorderedList', 'justifyCenter', 'justifyFull', 'justifyLeft', 'justifyRight', 'outdent',
-						'copy', 'cut', 'paste', 'selectAll', 'styleWithCSS', 'useCSS' ];
+						'copy', 'cut', 'paste', 'selectAll', 'styleWithCSS', 'useCSS' ],
+						
+	block_els		= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.' + WYSIHAT_EDITOR + '),' );
 	
 	/**
 	*  WysiHat.Commands#boldSelection() -> undefined
@@ -47,20 +45,29 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function boldSelection()
 	{
-		//this.wrapHTML('strong');
-		this.execCommand(BOLD, FALSE, NULL);
+		// this.execCommand(BOLD, FALSE, NULL);
+		if ( isBold )
+		{
+			this.manipulateSelection(function( range ){
+				this.getRangeElements( range, 'b,strong' ).each(this.clearElement);
+			});
+		}
+		else
+		{
+			this.manipulateSelection(function( range ){
+				range.surroundContents( 'strong' );
+			}, $quote);
+		}
 	}
-
 	/**
 	*  WysiHat.Commands#boldSelected() -> boolean
 	*
 	*  Check if current selection is bold or strong.
 	**/
-	function boldSelected()
+	function isBold()
 	{
-		return this.queryCommandState(BOLD);
+		return selectionIsWithin('b,strong');
 	}
-
 	/**
 	*  WysiHat.Commands#underlineSelection() -> undefined
 	*
@@ -68,39 +75,59 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function underlineSelection()
 	{
-		this.execCommand(UNDERLINE, FALSE, NULL);
+		// this.execCommand(UNDERLINE, FALSE, NULL);
+		if ( isUnderlined )
+		{
+			this.manipulateSelection(function( range ){
+				this.getRangeElements( range, 'u,ins' ).each(this.clearElement);
+			});
+		}
+		else
+		{
+			this.manipulateSelection(function( range ){
+				range.surroundContents( 'ins' );
+			}, $quote);
+		}
 	}
-
 	/**
 	*  WysiHat.Commands#underlineSelected() -> boolean
 	*
 	*  Check if current selection is underlined.
 	**/
-	function underlineSelected()
+	function isUnderlined()
 	{
-		return this.queryCommandState(UNDERLINE);
+		return selectionIsWithin('u,ins');
 	}
-
 	/**
 	*  WysiHat.Commands#italicSelection() -> undefined
 	*
 	*  Italicizes the current selection.
 	**/
-	function italicSelection()
+	function italicizeSelection()
 	{
-		this.execCommand(ITALIC, FALSE, NULL);
+		//this.execCommand(ITALIC, FALSE, NULL);
+		if ( isItalic )
+		{
+			this.manipulateSelection(function( range ){
+				this.getRangeElements( range, 'i,em' ).each(this.clearElement);
+			});
+		}
+		else
+		{
+			this.manipulateSelection(function( range ){
+				range.surroundContents( 'em' );
+			}, $quote);
+		}
 	}
-
 	/**
-	*  WysiHat.Commands#italicSelected() -> boolean
+	*  WysiHat.Commands#isItalic() -> boolean
 	*
 	*  Check if current selection is italic or emphasized.
 	**/
-	function italicSelected()
+	function isItalic()
 	{
-		return this.queryCommandState(ITALIC);
+		return selectionIsWithin('i,em');
 	}
-
 	/**
 	*  WysiHat.Commands#italicSelection() -> undefined
 	*
@@ -108,51 +135,66 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function strikethroughSelection()
 	{
-		this.execCommand(STRIKETHROUGH, FALSE, NULL);
-	}
-
-	/**
-	*  WysiHat.Commands#indentSelection() -> undefined
-	*
-	*  Indents the current selection.
-	**/
-	function indentSelection()
-	{
-		//this.wrapHTML('blockquote','p');
-		// TODO: Should use feature detection
-		if ($.browser.mozilla)
+		// this.execCommand(STRIKETHROUGH, FALSE, NULL);
+		if ( isStruckthrough )
 		{
-			var
-			selection	= WIN.getSelection(),
-			range		= selection.getRangeAt(0),
-			node		= selection.getNode(),
-			blockquote	= $('<blockquote/>');
-			if (range.collapsed)
-			{
-				range = DOC.createRange();
-				range.selectNodeContents(node);
-				selection.removeAllRanges();
-				selection.addRange(range);
-			}
-			range = selection.getRangeAt(0);
-			range.surroundContents(blockquote);
+			this.manipulateSelection(function( range ){
+				this.getRangeElements( range, 's,del' ).each(this.clearElement);
+			});
 		}
 		else
 		{
-			this.execCommand('indent', FALSE, NULL);
+			this.manipulateSelection(function( range ){
+				range.surroundContents( 'del' );
+			}, $quote);
 		}
 	}
-
 	/**
-	*  WysiHat.Commands#outdentSelection() -> undefined
+	*  WysiHat.Commands#isStruckthrough() -> undefined
 	*
-	*  Outdents the current selection.
+	*  Check if current selection is struck through.
 	**/
-	function outdentSelection()
+	function isStruckthrough()
 	{
-		this.execCommand('outdent', FALSE, NULL);
+		return selectionIsWithin('s,del');
 	}
 
+	
+	/**
+	*  WysiHat.Commands#quoteSelection() -> undefined
+	*
+	*  Places the currently selected block(s) in a blockquote.
+	**/
+	function quoteSelection()
+	{
+		//this.execCommand('indent', FALSE, NULL);
+		var $quote = $('<blockquote/>');
+		this.manipulateSelection(function( range, $quote ){
+			var $q = $quote.clone();
+			this.getRangeElements( range, block_els ).each(function(i){
+				var $this = $(this);
+				if ( ! i )
+				{
+					$this.replaceWith( $q );
+				}
+				$this.appendTo( $q );
+			});
+		}, $quote);
+	}
+	/**
+	*  WysiHat.Commands#unquoteSelection() -> undefined
+	*
+	*  removes the blockquote around the current selection.
+	**/
+	function unquoteSelection()
+	{
+		//this.execCommand('outdent', FALSE, NULL);
+		this.manipulateSelection(function( range ){
+			this.getRangeElements( range, 'blockquote > *' ).each(function(){
+				$(this).unwrap('blockquote');
+			});
+		});
+	}
 	/**
 	*  WysiHat.Commands#toggleIndentation() -> undefined
 	*
@@ -160,26 +202,25 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function toggleIndentation()
 	{
-		if ( this.indentSelected() )
+		if ( this.isIndented() )
 		{
-			this.outdentSelection();
+			this.unquoteSelection();
 		}
 		else
 		{
-			this.indentSelection();
+			this.quoteSelection();
 		}
 	}
-
 	/**
-	*  WysiHat.Commands#indentSelected() -> boolean
+	*  WysiHat.Commands#isIndented() -> boolean
 	*
 	*  Check if current selection is indented.
 	**/
-	function indentSelected()
+	function isIndented()
 	{
-		var node = WIN.getSelection().getNode();
-		return node.is("blockquote, blockquote *");
+		return selectionIsWithin('blockquote');
 	}
+
 
 	/**
 	* WysiHat.Commands#fontSelection(font) -> undefined
@@ -190,7 +231,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('fontname', FALSE, font);
 	}
-
 	/**
 	* WysiHat.Commands#fontSizeSelection(fontSize) -> undefined
 	* - font size (int) : font size for selection
@@ -201,7 +241,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('fontsize', FALSE, fontSize);
 	}
-
 	/**
 	*  WysiHat.Commands#colorSelection(color) -> undefined
 	*  - color (String): a color name or hexadecimal value
@@ -212,7 +251,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('forecolor', FALSE, color);
 	}
-
 	/**
 	*  WysiHat.Commands#backgroundColorSelection(color) -> undefined
 	*  - color (string) - a color or hexadecimal value
@@ -232,6 +270,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 	}
 
+
 	/**
 	*  WysiHat.Commands#alignSelection(color) -> undefined
 	*  - alignment (string) - how the text should be aligned (left, center, right)
@@ -241,7 +280,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('justify' + alignment);
 	}
-
 	/**
 	*  WysiHat.Commands#backgroundColorSelected() -> alignment
 	*
@@ -253,6 +291,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		return $(node).css('textAlign');
 	}
 
+
 	/**
 	*  WysiHat.Commands#linkSelection(url) -> undefined
 	*  - url (String): value for href
@@ -263,7 +302,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('createLink', FALSE, url);
 	}
-
 	/**
 	*  WysiHat.Commands#unlinkSelection() -> undefined
 	*
@@ -271,39 +309,27 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function unlinkSelection()
 	{
-		var node = WIN.getSelection().getNode();
-		if ( this.linkSelected() )
-		{
-			WIN.getSelection().selectNode(node);
-		}
-		this.execCommand('unlink', FALSE, NULL);
+		//var node = WIN.getSelection().getNode();
+		//if ( this.linkSelected() )
+		//{
+		//	WIN.getSelection().selectNode(node);
+		//}
+		//this.execCommand('unlink', FALSE, NULL);
+		this.manipulateSelection(function( range ){
+			this.getRangeElements( range, '[href]' ).each(this.clearElement);
+		});
 	}
-
 	/**
-	*  WysiHat.Commands#linkSelected() -> boolean
+	*  WysiHat.Commands#isLinked() -> boolean
 	*
 	*  Check if current selection is link.
 	**/
-	function linkSelected()
+	function isLinked()
 	{
-		var node = WIN.getSelection().getNode();
-		return node instanceof Element
-					? $(node).is('a')
-					: ( node ? node : FALSE );
+		// inside some sort of link
+		return selectionIsWithin('[href]');
 	}
-
-	/**
-	* DEPRECATED 
-	* WysiHat.Commands#formatblockSelection(element) -> undefined
-	*  - element (String): the type of element you want to wrap your selection
-	*    with (like 'h1' or 'p').
-	*
-	*  Wraps the current selection in a header or paragraph.
-	*
-	*function formatblockSelection(element)
-	*{
-	*	this.execCommand('formatblock', FALSE, element);
-	*}*/
+	
 
 	/**
 	*  WysiHat.Commands#toggleOrderedList() -> undefined
@@ -317,23 +343,71 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function toggleOrderedList()
 	{
+		//var
+		//selection	= WIN.getSelection(),
+		//$node		= $( selection.getNode() );
+        //
+		//if ( this.orderedListSelected() &&
+		//	 ! $node.is( 'ol li:last-child, ol li:last-child *' ) )
+		//{
+		//	selection.selectNode( $node.parent(OL) );
+		//}
+		//else if ( this.unorderedListSelected() )
+		//{
+		//	// Toggle list type
+		//	selection.selectNode( $node.parent(UL) );
+		//}
+		//this.execCommand('insertorderedlist', FALSE, NULL);
 		var
-		selection	= WIN.getSelection(),
-		$node		= $( selection.getNode() );
-
-		if ( this.orderedListSelected() &&
-			 ! $node.is( 'ol li:last-child, ol li:last-child *' ) )
+		$list	= $('<ol/>');
+		
+		if ( isOrderedList() )
 		{
-			selection.selectNode( $node.parent(OL) );
+			this.manipulateSelection(function( range, $list ){
+				this.getRangeElements( range, 'ol' ).each(function(i){
+					var $this = $(this);
+					$this.children('li').each(function(){
+						var $this = $(this);
+						replaceElement( $this, 'p' );
+						$this.find('ol,ul').each(function(){
+							var	$parent = $(this).parent();
+							if ( $parent.is('p') )
+							{
+								deleteElement.apply( $parent );
+							}
+						});
+					});
+					deleteElement.apply( $this );
+				});
+			});
 		}
-		else if ( this.unorderedListSelected() )
+		else
 		{
-			// Toggle list type
-			selection.selectNode( $node.parent(UL) );
+			this.manipulateSelection(function( range, $list ){
+				var $l = $list.clone();
+				this.getRangeElements( range, block_els ).each(function(i){
+					var $this = $(this);
+					if ( $this.parent().is('ul') )
+					{
+						replaceElement( $this.parent(), 'ol' );
+						$l = $this.parent();
+					}
+					else
+					{
+						if ( ! i )
+						{
+							$this.replaceWith( $l );
+						}
+						$this.appendTo( $l );
+					} 
+				});
+				$l.children(':not(li)').each(function(){
+					replaceElement( $(this), 'li' );
+				});
+			}, $list );
 		}
-		this.execCommand('insertorderedlist', FALSE, NULL);
+		
 	}
-
 	/**
 	*  WysiHat.Commands#insertOrderedList() -> undefined
 	*
@@ -341,25 +415,17 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function insertOrderedList()
 	{
-		this.toggleOrderedList();
+		toggleOrderedList();
 	}
-
 	/**
 	*  WysiHat.Commands#orderedListSelected() -> boolean
 	*
 	*  Check if current selection is within an ordered list.
 	**/
-	function orderedListSelected()
+	function isOrderedList()
 	{
-		var $el = $( WIN.getSelection().getNode() );
-		if ( $el.length )
-		{
-			return $el.is( '*[contenteditable=""] ol, *[contenteditable=true] ol, ' +
-			               '*[contenteditable=""] ol *, *[contenteditable=true] ol *' );
-		}
-		return FALSE;
+		return selectionIsWithin('ol');
 	}
-
 	/**
 	*  WysiHat.Commands#toggleUnorderedList() -> undefined
 	*
@@ -372,23 +438,71 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function toggleUnorderedList()
 	{
+		//var
+		//selection	= WIN.getSelection(),
+		//node		= selection.getNode();
+        //
+		//if ( this.unorderedListSelected() &&
+		//	 ! node.is("ul li:last-child, ul li:last-child *") )
+		//{
+		//	selection.selectNode(node.parent(UL));
+		//}
+		//else if ( this.orderedListSelected() )
+		//{
+		//	// Toggle list type
+		//	selection.selectNode(node.parent(OL));
+		//}
+		//this.execCommand('insertunorderedlist', FALSE, NULL);
 		var
-		selection	= WIN.getSelection(),
-		node		= selection.getNode();
-
-		if ( this.unorderedListSelected() &&
-			 ! node.is("ul li:last-child, ul li:last-child *") )
+		$list	= $('<ul/>');
+		
+		if ( isUnorderedList() )
 		{
-			selection.selectNode(node.parent(UL));
+			this.manipulateSelection(function( range, $list ){
+				this.getRangeElements( range, 'ul' ).each(function(i){
+					var $this = $(this);
+					$this.children('li').each(function(){
+						var $this = $(this);
+						replaceElement( $this, 'p' );
+						$this.find('ol,ul').each(function(){
+							var	$parent = $(this).parent();
+							if ( $parent.is('p') )
+							{
+								deleteElement.apply( $parent );
+							}
+						});
+					});
+					deleteElement.apply( $this );
+				});
+			});
 		}
-		else if ( this.orderedListSelected() )
+		else
 		{
-			// Toggle list type
-			selection.selectNode(node.parent(OL));
+			this.manipulateSelection(function( range, $list ){
+				var $l = $list.clone();
+				this.getRangeElements( range, block_els ).each(function(i){
+					var $this = $(this);
+					if ( $this.parent().is('ol') )
+					{
+						replaceElement( $this.parent(), 'ul' );
+						$l = $this.parent();
+					}
+					else
+					{
+						if ( ! i )
+						{
+							$this.replaceWith( $l );
+						}
+						$this.appendTo( $l );
+					} 
+				});
+				$l.children(':not(li)').each(function(){
+					replaceElement( $(this), 'li' );
+				});
+			}, $list );
 		}
-		this.execCommand('insertunorderedlist', FALSE, NULL);
+		
 	}
-
 	/**
 	*  WysiHat.Commands#insertUnorderedList() -> undefined
 	*
@@ -396,23 +510,18 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function insertUnorderedList()
 	{
-		this.toggleUnorderedList();
+		toggleUnorderedList();
 	}
-
 	/**
 	*  WysiHat.Commands#unorderedListSelected() -> boolean
 	*
 	*  Check if current selection is within an unordered list.
 	**/
-	function unorderedListSelected()
+	function isUnorderedList()
 	{
-		var element = WIN.getSelection().getNode();
-		if (element)
-		{
-			return element.is('*[contenteditable=""] ul, *[contenteditable=true] ul, *[contenteditable=""] ul *, *[contenteditable=true] ul *');
-		}
-		return FALSE;
+		return selectionIsWithin('ul');
 	}
+
 	
 	/**
 	*  WysiHat.Commands#insertImage(url) -> undefined
@@ -424,6 +533,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		this.execCommand('insertImage', FALSE, url);
 	}
+
 
 	/**
 	*  WysiHat.Commands#insertHTML(html) -> undefined
@@ -446,32 +556,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 	}
 
-	/**
-	*  WysiHat.Commands#execCommand(command[, ui = FALSE][, value = NULL]) -> undefined
-	*  - command (String): Command to execute
-	*  - ui (Boolean): Boolean flag for showing UI. Currenty this not
-	*    implemented by any browser. Just use FALSE.
-	*  - value (String): Value to pass to command
-	*
-	*  A simple delegation method to the documents execCommand method.
-	**/
-	function execCommand( command, ui, value )
-	{
-		var handler = this.commands[command];
-		if ( handler )
-		{
-			handler.bind(this)(value);
-		}
-		else
-		{
-			try {
-				WIN.document.execCommand(command, ui, value);
-			}
-			catch(e) { return NULL; }
-		}
-		$(DOC.activeElement).trigger( CHANGE_EVT );
-	}
-	
 	/**
 	*  WysiHat.Commands#wrapHTML( tagName[, tagName]+) -> undefined
 	*  - tagName (String): Tag to wrap around content
@@ -503,7 +587,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
-
+	
 	/**
 	*  WysiHat.Commands#blockFormat( tagName ) -> undefined
 	*  - tagName (String): block tag to establish
@@ -531,7 +615,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			ranges.push( range );
 
 			// update as necessary
-			this.getRangeElements( range )
+			this.getRangeElements( range, block_els )
 				.each(function(){
 					editor.replaceElement( $(this), tagName );
 				 })
@@ -593,6 +677,17 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		
 		return $new;
 	}
+	
+	/**
+	*  WysiHat.Commands#deleteElement() -> undefined
+	*
+	*  Replaces an existing content with it's contents
+	**/
+	function deleteElement()
+	{
+		var $this = $(this);
+		$this.replaceWith( $this.html() );
+	}
 
 	/**
 	*  WysiHat.Commands#stripFormattingElements() -> undefined
@@ -616,7 +711,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 
 			if ( isFormatter( $el ) )
 			{
-				$el.replaceWith( $el.html() );
+				deleteElement.apply( $el );
 			}
 		}
 		
@@ -631,7 +726,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			range = selection.getRangeAt( i );
 			ranges.push( range );
-			this.getRangeElements( range ).each( stripFormatters );
+			this.getRangeElements( range, block_els ).each( stripFormatters );
 		}
 
 		$(DOC.activeElement).trigger( CHANGE_EVT );
@@ -639,6 +734,41 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		this.restoreRanges( ranges );
 	}
 	
+	/**
+	*  WysiHat.Commands#isValidCommand( cmd ) -> boolean
+	*  - cmd (String): the command you want to make sure is valid
+	* 
+	*  Checks the validity of the command
+	**/
+	function isValidCommand( cmd )
+	{
+		return ( $.inArray( cmd, valid_cmds ) > -1 );
+	}
+	/**
+	*  WysiHat.Commands#execCommand(command[, ui = FALSE][, value = NULL]) -> undefined
+	*  - command (String): Command to execute
+	*  - ui (Boolean): Boolean flag for showing UI. Currenty this not
+	*    implemented by any browser. Just use FALSE.
+	*  - value (String): Value to pass to command
+	*
+	*  A simple delegation method to the documents execCommand method.
+	**/
+	function execCommand( command, ui, value )
+	{
+		var handler = this.commands[command];
+		if ( handler )
+		{
+			handler.bind(this)(value);
+		}
+		else
+		{
+			try {
+				WIN.document.execCommand(command, ui, value);
+			}
+			catch(e) { return NULL; }
+		}
+		$(DOC.activeElement).trigger( CHANGE_EVT );
+	}
 	/**
 	*  WysiHat.Commands#queryCommandState(state) -> Boolean
 	*  - state (String): bold, italic, underline, etc
@@ -651,7 +781,8 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	*
 	*  editor.queryCommands.set("link", editor.linkSelected);
 	**/
-	function queryCommandState(state) {
+	function queryCommandState(state)
+	{
 		var handler = this.queryCommands[state];
 		if ( handler )
 		{
@@ -682,57 +813,6 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			styles[style.first()] = $(node).css(style.last());
 		});
 		return styles;
-	}
-	
-	/**
-	*  WysiHat.Commands#getRangeElements(range) -> collection
-	*  - range (Range): the range to find the elements within
-	* 
-	*  Fetches a collection of elements within a given Range and returns a jQuery object
-	**/
-	function getRangeElements( range )
-	{
-		var
-		blocks	= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.' + WYSIHAT_EDITOR + '),' ),
-		
-		// find the start and end of the range
-		$from	= $( range.startContainer ).closest( blocks ),
-		$to		= $( range.endContainer ).closest( blocks ),
-		$els	= $from;
-		
-		// figure out the elements to collect
-		if ( ! $from.filter( $to ).length )
-		{
-			if ( $from.nextAll().filter( $to ).length )
-			{
-				$els = $from.nextUntil( $to ).andSelf().add( $to );
-			}
-			else
-			{
-				$els = $from.prevUntil( $to ).andSelf().add( $to );
-			}
-		}
-		
-		return $els;
-	}
-	
-	/**
-	*  WysiHat.Commands#restoreRanges(ranges) -> undefined
-	*  - ranges (Array): an array of Range objects to be re-established
-	* 
-	*  Restores previously selected ranges
-	**/
-	function restoreRanges( ranges )
-	{
-		var
-		selection = WIN.getSelection(),
-		i = ranges.length;
-		
-		selection.removeAllRanges();
-		while ( i-- )
-		{
-			selection.addRange( ranges[i] );
-		}
 	}
 	
 	/**
@@ -780,60 +860,174 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	}
 	
 	
-	function isNativeCommand( cmd )
+	/**
+	*  WysiHat.Commands#manipulateSelection( callback )
+	*  - callback (Function): the function you want to run
+	* 
+	*  Runs the supplied function in the context of the Commands object
+	*  Any additional arguments are passed directly to the callback
+	**/
+	function manipulateSelection()
 	{
-		return ( $.inArray( cmd, native_cmds ) > -1 );
+		var
+		selection	= WIN.getSelection(),
+		i			= selection.rangeCount,
+		ranges		= [],
+		args		= arguments,
+		callback	= args[0],
+		range;
+
+		while ( i-- )
+		{
+			range	= selection.getRangeAt( i );
+			ranges.push( range );
+			
+			// change the first arg to the range
+			args[0] = range;
+
+			// run the callback
+			callback.apply( this, args );
+		}
+		$(DOC.activeElement).trigger( CHANGE_EVT );
+		this.restoreRanges( ranges );
+	}
+	/**
+	*  WysiHat.Commands#getRangeElements(range) -> collection
+	*  - range (Range): the range to find the elements within
+	*  - tagNames (String): a comma-separated string of tag names
+	* 
+	*  Fetches a collection of elements within a given Range and returns a jQuery object
+	**/
+	function getRangeElements( range, tagNames )
+	{
+		var
+		// find the start and end of the range
+		$from	= $( range.startContainer ).closest( tagNames ),
+		$to		= $( range.endContainer ).closest( tagNames ),
+		$els	= $('nullset');
+
+		// make sure we never go higher in the DOM than the editor
+		if ( !! $from.parents('.WysiHat-editor').length &&
+		 	 !! $to.parents('.WysiHat-editor').length )
+		{
+			$els = $from;
+			
+			// figure out the elements to collect
+			if ( ! $from.filter( $to ).length )
+			{
+				if ( $from.nextAll().filter( $to ).length )
+				{
+					$els = $from.nextUntil( $to ).andSelf().add( $to );
+				}
+				else
+				{
+					$els = $from.prevUntil( $to ).andSelf().add( $to );
+				}
+			}
+			
+		}
+		
+		return $els;
+	}
+	/**
+	*  WysiHat.Commands#restoreRanges(ranges) -> undefined
+	*  - ranges (Array): an array of Range objects to be re-established
+	* 
+	*  Restores previously selected ranges
+	**/
+	function restoreRanges( ranges )
+	{
+		var
+		selection = WIN.getSelection(),
+		i = ranges.length;
+		
+		selection.removeAllRanges();
+		while ( i-- )
+		{
+			selection.addRange( ranges[i] );
+		}
+	}
+	/**
+	*  WysiHat.Commands#selectionIsWithin( tagNames ) -> boolean
+	*  - tagNames (String): a comma-separated list of tags
+	* 
+	*  Checks to see if the selection is within one of the supplied tags
+	**/
+	function selectionIsWithin( tagNames )
+	{
+		return !! $( WIN.getSelection().getNode() ).closest( tagNames ).length;
 	}
 	
 	
 	return {
+		// phrase-level formatting
 		boldSelection:				boldSelection,
-		boldSelected:				boldSelected,
+		isBold:						isBold,
+		italicizeSelection:			italicizeSelection,
+		isItalic:					isItalic,
 		underlineSelection:			underlineSelection,
-		underlineSelected:			underlineSelected,
-		italicSelection:			italicSelection,
-		italicSelected:				italicSelected,
+		isUnderlined:				isUnderlined,
 		strikethroughSelection:		strikethroughSelection,
-		indentSelection:			indentSelection,
-		outdentSelection:			outdentSelection,
+		isStruckthrough:			isStruckthrough,
+		
+		// blockquote-related
+		quoteSelection:				quoteSelection,
+		unquoteSelection:			unquoteSelection,
 		toggleIndentation:			toggleIndentation,
-		indentSelected:				indentSelected,
+		isIndented:					isIndented,
+		
 		fontSelection:				fontSelection,
 		fontSizeSelection:			fontSizeSelection,
 		colorSelection:				colorSelection,
 		backgroundColorSelection:	backgroundColorSelection,
+		
 		alignSelection:				alignSelection,
 		alignSelected:				alignSelected,
+		
 		linkSelection:				linkSelection,
 		unlinkSelection:			unlinkSelection,
-		linkSelected:				linkSelected,
+		isLinked:					isLinked,
+		
 		toggleOrderedList:			toggleOrderedList,
 		insertOrderedList:			insertOrderedList,
-		orderedListSelected:		orderedListSelected,
+		isOrderedList:				isOrderedList,
 		toggleUnorderedList:		toggleUnorderedList,
 		insertUnorderedList:		insertUnorderedList,
-		unorderedListSelected:		unorderedListSelected,
+		isUnorderedList:			isUnorderedList,
+
 		insertImage:				insertImage,
+
 		insertHTML:					insertHTML,
 		wrapHTML:					wrapHTML,
+
 		changeContentBlock:			changeContentBlock,
 		unformatContentBlock:		unformatContentBlock,
 		replaceElement:				replaceElement,
+		deleteElement:				deleteElement,
 		stripFormattingElements:	stripFormattingElements,
+
 		execCommand:				execCommand,
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
+
+		toggleHTML:					toggleHTML,
+		
+		isValidCommand:				isValidCommand,
+		manipulateSelection:		manipulateSelection,
 		getRangeElements:			getRangeElements,
 		restoreRanges:				restoreRanges,
-		toggleHTML:					toggleHTML,
-		isNativeCommand:			isNativeCommand,
-
+		selectionIsWithin:			selectionIsWithin,
+		
 		commands: {},
 
 		queryCommands: {
-			link:			linkSelected,
-			orderedlist:	orderedListSelected,
-			unorderedlist:	unorderedListSelected
+			bold:			isBold,
+			italic:			isItalic,
+			underline:		isUnderlined,
+			strikethrough:	isStruckthrough,
+			createLink:		isLinked,
+			orderedlist:	isOrderedList,
+			unorderedlist:	isUnorderedList
 		},
 
 		styleSelectors: {

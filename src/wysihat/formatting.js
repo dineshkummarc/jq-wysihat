@@ -8,48 +8,114 @@ WysiHat.Formatting = (function($){
 	ACCUMULATING_LIST_ITEM = {};
 
 	return {
+		cleanup: function( $el )
+		{
+			var
+			replaceElement = WysiHat.Commands.replaceElement;
+			$el
+			   // Apple's span elements
+			   .find('span.Apple-style-span').each(function(){
+					var $this = $(this);
+					$this.removeAttr('class');
+					if ( $this.css('font-weight') == 'bold' &&
+					 	 $this.css('font-style') == 'italic' )
+					{
+						$this.removeAttr('style').wrap('<strong>');
+						replaceElement( $this, 'em' );
+					}
+					else if ( $this.css('font-weight') == 'bold' )
+					{
+						replaceElement( $this.removeAttr('style'), 'strong' );
+					}
+					else if ( $this.css('font-style') == 'italic' )
+					{
+						replaceElement( $this.removeAttr('style'), 'em' );
+					}
+				}).end()
+			   // divs that should be paragraphs
+			   .children('div').each(function(){
+					var $this = $(this);
+					if ( ! $this.get(0).attributes.length )
+					{
+						replaceElement( $this, 'p' );
+					}
+			    }).end()
+			   // bold
+			   .find('b').each(function(){
+					replaceElement($(this),'strong');
+			 	}).end()
+			   // italic
+			   .find('i').each(function(){
+					replaceElement($(this),'em');
+				}).end()
+			   // empty paragraphs
+			   .find('p:empty').remove();
+		},
+		format: function( $el )
+		{
+			var
+			html = $el.html()
+						.replace( /<\/?[\w]+/g, function(tag){
+							return tag.toLowerCase();
+						 })
+						//.replace('</div><div><br></div><div>','</p><p>')
+						//.replace('<br></div><div>','<br>')
+						//.replace('</div><div>','</p><p>')
+						//.replace('<br></div>','</p>')
+						//.replace('<div>','<p>')
+						//.replace('</div>','</p>')
+						.replace('<p>&nbsp;</p>','')
+						// Fancy formatting
+							.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
+						.replace(/\n+/,'\n')
+						.replace(/<p>\n+<\/p>/,'');
+			
+			$el.html( html );
+		},
 		getBrowserMarkupFrom: function( $el )
 		{
 
 			var $container = $('<div>' + $el.val().replace(/\n/,'') + '</div>');
-
-			function spanify( $element, style )
-			{
-				$element.replaceWith(
-					'<span style="' + style + '" class="Apple-style-span">' + $element.html() + '</span>'
-				);
-			}
-
-			function convertStrongsToSpans()
-			{
-				$container.find( 'strong' ).each(function(){
-					spanify( $(this), 'font-weight: bold' );
-				});
-			}
-
-			function convertEmsToSpans()
-			{
-				$container.find( 'em' ).each(function(){
-					spanify( $(this), 'font-style: italic' );
-				});
-			}
-
-			function convertDivsToParagraphs()
-			{
-				$container.find( 'div' ).each(function(){
-					replaceElement( $(this), 'p' );
-				});
-			}
-
-			if ( $.browser.webkit || $.browser.mozilla )
-			{
-				convertStrongsToSpans();
-				convertEmsToSpans();
-			}
-			else if ( $.browser.msie || $.browser.opera )
-			{
-				convertDivsToParagraphs();
-			}
+			
+			this.cleanup( $container );
+			
+			//function spanify( $element, style )
+			//{
+			//	$element.replaceWith(
+			//		'<span style="' + style + '" class="Apple-style-span">' + $element.html() + '</span>'
+			//	);
+			//}
+            //
+			//function convertStrongsToSpans()
+			//{
+			//	$container.find( 'strong' ).each(function(){
+			//		spanify( $(this), 'font-weight: bold' );
+			//	});
+			//}
+            //
+			//function convertEmsToSpans()
+			//{
+			//	$container.find( 'em' ).each(function(){
+			//		spanify( $(this), 'font-style: italic' );
+			//	});
+			//}
+            //
+			//function convertDivsToParagraphs()
+			//{
+			//	$container.find( 'div' ).each(function(){
+			//		replaceElement( $(this), 'p' );
+			//	});
+			//}
+            //
+			//if ( $.browser.webkit || $.browser.mozilla )
+			//{
+			//	convertStrongsToSpans();
+			//	convertEmsToSpans();
+			//}
+			//else if ( $.browser.msie || $.browser.opera )
+			//{
+			//	convertDivsToParagraphs();
+			//}
 			
 			// make sure we always start with a paragraph
 			if ( $container.html() == '' )
@@ -64,9 +130,11 @@ WysiHat.Formatting = (function($){
 		getApplicationMarkupFrom: function( $el )
 		{
 			var
-			$clone	= $el.clone(),
-			el_id	= $el.attr('id'),
+			$clone			= $el.clone(),
+			el_id			= $el.attr('id'),
+			replaceElement	= WysiHat.Commands.replaceElement,
 			$container;
+			
 			//$p		= $('<p></p>'),
 			//mode	= ACCUMULATING_LINE,
 			//$result, $container,
@@ -317,42 +385,14 @@ WysiHat.Formatting = (function($){
 			//				.appendTo( $result );
 			//}
 
-			function cleanup()
-			{
-				var
-				replaceElement = WysiHat.Commands.replaceElement,
-				html = $container.html()
-							.replace( /<\/?[\w]+/g, function(tag){
-								return tag.toLowerCase();
-							 })
-							//.replace('</div><div><br></div><div>','</p><p>')
-							//.replace('<br></div><div>','<br>')
-							//.replace('</div><div>','</p><p>')
-							//.replace('<br></div>','</p>')
-							//.replace('<div>','<p>')
-							//.replace('</div>','</p>')
-							.replace('<p>&nbsp;</p>','')
-							// Fancy formatting
-								.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
-							.replace(/\n+/,'\n')
-							.replace(/<p>\n+<\/p>/,'');
-				
-				$container.html( html );
-				$container
-					.find('b').each(function(){
-						replaceElement($(this),'strong');
-					 }).end()
-					.find('i').each(function(){
-						replaceElement($(this),'em');
-					 }).end()
-					.find('p:empty').remove()
-					;
-			}
-
 			$container = $('<div></div>').html($clone.html());
+			this.cleanup( $container );
+			
+			// semantic cleanup
 			//walk( $clone.get(0).childNodes );
 			//flush();
-			cleanup();
+			
+			this.format( $container );
 			return $container.html();
 		}
 		
