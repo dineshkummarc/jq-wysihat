@@ -172,10 +172,29 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		this.manipulateSelection(function( range, $quote ){
 			var $q = $quote.clone();
 			this.getRangeElements( range, block_els ).each(function(i){
-				var $this = $(this);
+				var
+				$this	= $(this),
+				list	= false,
+				$el;
+				if ( $this.is('li') )
+				{
+					list = true;
+					$el = $('<p/>').html( $this.html() );
+					$this.replaceWith( $el );
+					$this = $el;
+				}
 				if ( ! i )
 				{
-					$this.replaceWith( $q );
+					if ( list )
+					{
+						$q.wrap('<li/>');
+						$el = $q.parent();
+						$this.replaceWith( $el );
+					}
+					else
+					{
+						$this.replaceWith( $q );
+					}
 				}
 				$this.appendTo( $q );
 			});
@@ -191,7 +210,15 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		//this.execCommand('outdent', FALSE, NULL);
 		this.manipulateSelection(function( range ){
 			this.getRangeElements( range, 'blockquote > *' ).each(function(){
-				$(this).unwrap('blockquote');
+				var
+				$this	= $(this).unwrap('blockquote'),
+				$parent	= $this.parent();
+				// strip unnecessary paragraphs
+				if ( $parent.is('li') &&
+				 	 $parent.children().length == 1 )
+				{
+					$parent.html( $this.html() );
+				}
 			});
 		});
 	}
