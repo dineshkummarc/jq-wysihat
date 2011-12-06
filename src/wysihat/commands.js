@@ -36,6 +36,13 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 						'insertUnorderedList', 'justifyCenter', 'justifyFull', 'justifyLeft', 'justifyRight', 'outdent',
 						'copy', 'cut', 'paste', 'selectAll', 'styleWithCSS', 'useCSS' ],
 						
+	dflt_shortcuts	= {
+						bold:		{ ctrl: true, keycode: 66 }, // b
+						createLink: { ctrl: true, keycode: 76 }, // l
+						italic:		{ ctrl: true, keycode: 73 }, // i
+						underline:	{ ctrl: true, keycode: 85 }  // u
+					  },
+
 	block_els		= WysiHat.Element.getContentElements().join(',').replace( ',div,', ',div:not(.' + WYSIHAT_EDITOR + '),' );
 	
 	/**
@@ -772,6 +779,16 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		return ( $.inArray( cmd, valid_cmds ) > -1 );
 	}
 	/**
+	*  WysiHat.Commands#getDefaultShortcut( cmd ) -> mixed
+	*  - cmd (String): the command you want to lookup a shortcut for
+	* 
+	*  Returns the default shortcut or FALSE
+	**/
+	function getDefaultShortcut( cmd )
+	{
+		return ( !! dflt_shortcuts[cmd] ) ? dflt_shortcuts[cmd] : false;
+	}
+	/**
 	*  WysiHat.Commands#execCommand(command[, ui = FALSE][, value = NULL]) -> undefined
 	*  - command (String): Command to execute
 	*  - ui (Boolean): Boolean flag for showing UI. Currenty this not
@@ -855,7 +872,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		$editor	= $(this),
 		$target	= $( e.target ),
 		text	= $target.text(),
-		$btn	= $target.closest( 'a[role=button]' ),
+		$btn	= $target.closest( 'button,[role=button]' ),
 		$field	= $editor.data('field'),
 		$tools	= $btn.siblings();
 		
@@ -868,14 +885,14 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			if ( ! HTML )
 			{
-				$btn.find('span').text($btn.data('toggle-text'));
+				$btn.find('b').text($btn.data('toggle-text'));
 				$tools.hide();
 				$editor.trigger('WysiHat-editor:change:immediate').hide();
 				$field.show();
 			}
 			else
 			{
-				$btn.find('span').text(text);
+				$btn.find('b').text(text);
 				$tools.show();
 				$field.trigger('WysiHat-field:change:immediate').hide();
 				$editor.show();
@@ -1040,6 +1057,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		toggleHTML:					toggleHTML,
 		
 		isValidCommand:				isValidCommand,
+		getDefaultShortcut:			getDefaultShortcut,
 		manipulateSelection:		manipulateSelection,
 		getRangeElements:			getRangeElements,
 		restoreRanges:				restoreRanges,

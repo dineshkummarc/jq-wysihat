@@ -27,6 +27,10 @@
 		{
 			$editor	= $el;
 			createToolbarElement();
+			
+			// TODO: Add keyboard support for moving from button to button while maintaining a selection
+			//var shortcut = shortcutTest( 'toolbar', { shortcut: { keycode: 121, alt: true } } );
+			//observeShortcut( shortcut, function(){ $toolbar.children().eq(0).focus(); } );
 		}
 		
 		/**
@@ -85,7 +89,7 @@
 		**/
 		function addButton( options, handler )
 		{
-			var name, button;
+			var name, $button, shortcut;
 			
 			if ( ! options['name'] )
 			{
@@ -101,6 +105,15 @@
 			}
 			handler = buttonHandler( name, options );
 			observeButtonClick( $button, handler );
+			
+			// TODO: Need to determine if/when native formatting codes are supported
+			//shortcut = shortcutTest( name, options );
+			//if ( !! shortcut )
+			//{
+			//	observeShortcut( shortcut, function(){ $button.click(); } );
+			//}
+			// TODO: Add keyboard support for moving from button to button while maintaining a selection
+			// $button.keydown(buttonKey);
 
 			handler = buttonStateHandler( name, options );
 			observeStateChanges( $button, name, handler );
@@ -116,7 +129,7 @@
 		**/
 		function createButtonElement( $toolbar, options )
 		{
-			var $btn = $('<a role="button" aria-pressed="false" href="#" tabindex="-1"><span>' + options['label'] + '</span></a>')
+			var $btn = $('<button aria-pressed="false" tabindex="-1"><b>' + options['label'] + '</b></button>')
 							.addClass( 'button ' + options['name'] )
 							.appendTo( $toolbar );
 			
@@ -256,6 +269,85 @@
 				$button
 					.removeClass('selected')
 					.attr('aria-pressed','false');
+			}
+		}
+
+		/**
+		*  WysiHat.Toolbar#shortcutTest(name, options) -> undefined
+		*  - name (String): Button name
+		*  - options (Hash): Options hash that pass from addButton
+		*
+		*  returns a keystroke definition or false.
+		**/
+		function shortcutTest( name, options )
+		{
+			var shortcut = options['shortcut'] || WysiHat.Commands.getDefaultShortcut( name ),
+			alt, ctrl, code;
+			if ( !! shortcut )
+			{
+				alt		= !! shortcut['alt'];
+				ctrl	= !! shortcut['ctrl'];
+				code	= shortcut['keycode'];
+				shortcut = function( e ){
+					return ( code == e.which &&
+							 alt == e.altKey &&
+							 ctrl == e.ctrlKey );
+				};
+			}
+			return shortcut;
+		}
+		
+		/**
+		*  WysiHat.Toolbar#observeShortcut(element, name, definition) -> undefined
+		*  - test (Function): test for shortcut match (returns true or false)
+		*  - handler (Function): The function to trigger if matched
+		*
+		*  Binds an action to a keystroke
+		**/
+		function observeShortcut( test, handler )
+		{
+			$editor.keydown(function( e ){
+				if ( test( e ) )
+				{
+					handler();
+				}
+			});
+		}
+
+		/**
+		*  buttonKey(e) -> undefined
+		*  - e (Event)
+		*
+		*  Handles default keyboard actions for a button
+		**/
+		function buttonKey( e )
+		{
+			console.log('hi');
+			var
+			$this	= $(this).closest( 'button,[role=button]' ),
+			key		= e.which,
+			$next;
+			console.log(key);
+			switch ( key )
+			{
+				case 37:
+				case 38:
+					$next = $this.prev();
+					if ( ! $next.length )
+					{
+						$next = $( $this.parent().get(0).lastChild );
+					}
+					$next.focus();
+					break;
+				case 39:
+				case 40:
+					$next = $this.next();
+					if ( ! $next.length )
+					{
+						$next = $( $this.parent().get(0).firstChild );
+					}
+					$next.focus();
+					break;
 			}
 		}
 
