@@ -999,7 +999,9 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function selectionIsWithin( tagNames )
 	{
-		return !! $( WIN.getSelection().getNode() ).closest( tagNames ).length;
+		var selection = WIN.getSelection();
+		return !! ( $( selection.anchorNode ).closest( tagNames ).length ||
+					$( selection.focusNode ).closest( tagNames ).length );
 	}
 	
 	

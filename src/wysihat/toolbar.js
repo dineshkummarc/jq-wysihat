@@ -46,7 +46,7 @@
 		**/
 		function createToolbarElement()
 		{
-			$toolbar = $('<div class="editor_toolbar" role="presentation"></div>')
+			$toolbar = $('<div class="' + WysiHat.name + '-editor-toolbar" role="presentation"></div>')
 							.insertBefore( $editor );
 		}
 
@@ -134,7 +134,7 @@
 							.appendTo( $toolbar );
 			
 			if ( options['cssClass'] )
-			{
+			{virt
 				$btn.addClass( options['cssClass'] );
 			}
 			
