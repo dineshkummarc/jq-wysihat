@@ -117,6 +117,8 @@
 
 			handler = buttonStateHandler( name, options );
 			observeStateChanges( $button, name, handler );
+			
+			return $button;
 		}
 
 		/**
