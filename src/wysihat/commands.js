@@ -63,7 +63,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			this.manipulateSelection(function( range ){
 				range.surroundContents( 'strong' );
-			}, $quote);
+			});
 		}
 	}
 	/**
@@ -93,7 +93,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			this.manipulateSelection(function( range ){
 				range.surroundContents( 'ins' );
-			}, $quote);
+			});
 		}
 	}
 	/**
@@ -123,7 +123,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			this.manipulateSelection(function( range ){
 				range.surroundContents( 'em' );
-			}, $quote);
+			});
 		}
 	}
 	/**
@@ -153,7 +153,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		{
 			this.manipulateSelection(function( range ){
 				range.surroundContents( 'del' );
-			}, $quote);
+			});
 		}
 	}
 	/**
