@@ -59,6 +59,17 @@
 
 				$.extend( $editor, WysiHat.Commands );
 
+				function updateField()
+				{
+					$field.val( WysiHat.Formatting.getApplicationMarkupFrom( $editor ) );
+					this.fTimer = null;
+				}
+				function updateEditor()
+				{
+					$editor.html( WysiHat.Formatting.getBrowserMarkupFrom( $field ) );
+					this.eTimer = null;
+				}
+				
 				$field
 					.data( 'editor', $editor )
 					.bind( F_EVT, function(){
@@ -81,17 +92,6 @@
 							 })
 							.bind( E_EVT + IMMEDIATE, updateField )
 					 );
-
-				function updateField()
-				{
-					$field.val( WysiHat.Formatting.getApplicationMarkupFrom( $editor ) );
-					this.fTimer = null;
-				}
-				function updateEditor()
-				{
-					$editor.html( WysiHat.Formatting.getBrowserMarkupFrom( $field ) );
-					this.eTimer = null;
-				}
 			}
 
 			//WysiHat.BrowserFeatures.run();
