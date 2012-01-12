@@ -21,7 +21,7 @@ WysiHat.Element = (function( $ ){
 	
 	formatting		= [ 'b', 'code', 'del', 'em', 'i', 'ins', 'kbd', 'span', 's', 'strong', 'u' ],
 	
-	html4_blocks	= [ 'address', 'blockquote', 'div', 'dd', 'dt', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'pre' ],
+	html4_blocks	= [ 'address', 'blockquote', 'div', 'dd', 'dt', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'pre' ],
 	
 	forms			= [ 'button', 'datalist', 'fieldset', 'form', 'input', 'keygen', 'label', 
 						'legend', 'optgroup', 'option', 'output', 'select', 'textarea' ];

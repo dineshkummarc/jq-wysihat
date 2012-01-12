@@ -306,7 +306,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 
 
 	/**
-	*  WysiHat.Commands#alignSelection(color) -> undefined
+	*  WysiHat.Commands#alignSelection(alignment) -> undefined
 	*  - alignment (string) - how the text should be aligned (left, center, right)
 	*
 	**/
@@ -315,7 +315,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		this.execCommand('justify' + alignment);
 	}
 	/**
-	*  WysiHat.Commands#backgroundColorSelected() -> alignment
+	*  WysiHat.Commands#alignSelected() -> alignment
 	*
 	*  Returns the alignment of the selected text area
 	**/
@@ -440,7 +440,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 				});
 			}, $list );
 		}
-		
+		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
 	/**
 	*  WysiHat.Commands#insertOrderedList() -> undefined
@@ -535,7 +535,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 				});
 			}, $list );
 		}
-		
+		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
 	/**
 	*  WysiHat.Commands#insertUnorderedList() -> undefined
@@ -563,7 +563,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	*  - url (String): value for src
 	*  Insert an image at the insertion point with the given url.
 	**/
-	function insertImage(url)
+	function insertImage( url, attrs )
 	{
 		this.execCommand('insertImage', FALSE, url);
 	}
@@ -583,6 +583,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 			range.pasteHTML(html);
 			range.collapse(FALSE);
 			range.select();
+			$(DOC.activeElement).trigger( CHANGE_EVT );
 		}
 		else
 		{
@@ -709,6 +710,8 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		
 		$el.replaceWith( $new );
 		
+		$(DOC.activeElement).trigger( CHANGE_EVT );
+	
 		return $new;
 	}
 	
@@ -721,6 +724,8 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	{
 		var $this = $(this);
 		$this.replaceWith( $this.html() );
+		
+		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
 
 	/**
