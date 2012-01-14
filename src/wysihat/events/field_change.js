@@ -23,12 +23,16 @@
 			if ( val &&
 				 element.previousValue != val )
 			{
-				$element.trigger( evt );
+				$element.trigger( 'WysiHat-' + evt );
 				element.previousValue = val;
 			}
 		}
 
-		$('body').delegate('input,textarea,*[contenteditable],*[contenteditable=true]', 'keydown', fieldChangeHandler );
+		$('body')
+			.delegate('input,textarea,*[contenteditable],*[contenteditable=true]', 'keydown', fieldChangeHandler )
+			.delegate('.WysiHat-editor', 'input paste', function(){
+				WysiHat.Formatting.cleanup( $(this) );
+			});
 		
 	});
 	
