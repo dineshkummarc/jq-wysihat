@@ -20,7 +20,7 @@
 			$bookmark = $( '<span id="WysiHat-bookmark">&nbsp;</span>' )
 							.appendTo( $parent );
 
-			range.collapse();
+			range.collapse(true);
 			range.pasteHTML( $parent.html() );
 		}
 
@@ -36,7 +36,7 @@
 			}
 
 			range.moveToElementText( $bookmark.get(0) );
-			range.collapse();
+			range.collapse(true);
 			range.select();
 
 			$bookmark.remove();
