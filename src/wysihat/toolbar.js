@@ -133,10 +133,19 @@
 		{
 			var $btn = $('<button aria-pressed="false" tabindex="-1"><b>' + options['label'] + '</b></button>')
 							.addClass( 'button ' + options['name'] )
-							.appendTo( $toolbar );
+							.appendTo( $toolbar )
+							.hover(
+								function(){
+									var $button = $(this).closest('button');
+									$button.attr('title',$button.find('b').text());
+								},
+								function(){
+									$(this).closest('button').removeAttr('title');
+								}
+							 );
 			
 			if ( options['cssClass'] )
-			{virt
+			{
 				$btn.addClass( options['cssClass'] );
 			}
 			
@@ -145,6 +154,7 @@
 				$btn.attr('title',options['title']);
 			}
 			
+			$btn.data( 'text', options['label'] );
 			if ( options['toggle-text'] )
 			{
 				$btn.data( 'toggle-text', options['toggle-text'] );
@@ -237,7 +247,7 @@
 		{
 			var previousState;
 			$editor.bind( 'WysiHat-selection:change', function(){
-				var state = handler( $editor );
+				var state = handler( $editor, $button );
 				if (state != previousState)
 				{
 					previousState = state;
@@ -260,17 +270,25 @@
 		**/
 		function updateButtonState( $button, name, state )
 		{
+			var
+			text	= $button.data('text'),
+			toggle	= $button.data('toggle-text');
+			
 			if ( state )
 			{
 				$button
 					.addClass('selected')
-					.attr('aria-pressed','true');
+					.attr('aria-pressed','true')
+					.find('b')
+						.text( toggle ? toggle : text );
 			}
 			else
 			{
 				$button
 					.removeClass('selected')
-					.attr('aria-pressed','false');
+					.attr('aria-pressed','false')
+					.find('b')
+						.text( text );
 			}
 		}
 
@@ -324,12 +342,10 @@
 		**/
 		function buttonKey( e )
 		{
-			console.log('hi');
 			var
 			$this	= $(this).closest( 'button,[role=button]' ),
 			key		= e.which,
 			$next;
-			console.log(key);
 			switch ( key )
 			{
 				case 37:
