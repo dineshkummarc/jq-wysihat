@@ -13,10 +13,13 @@ WysiHat.Formatting = (function($){
 			var
 			replaceElement = WysiHat.Commands.replaceElement;
 			$el
-			   // Apple's span elements
-			   .find('span.Apple-style-span').each(function(){
+				// Apple's span elements
+				.find('span').each(function(){
 					var $this = $(this);
-					$this.removeAttr('class');
+					if ( $this.is('.Apple-style-span') )
+					{
+						$this.removeClass('.Apple-style-span');
+					}
 					if ( $this.css('font-weight') == 'bold' &&
 					 	 $this.css('font-style') == 'italic' )
 					{
@@ -31,29 +34,34 @@ WysiHat.Formatting = (function($){
 					{
 						replaceElement( $this.removeAttr('style'), 'em' );
 					}
-				}).end()
-			   // divs that should be paragraphs
-			   .children('div').each(function(){
-					var $this = $(this);
-					if ( ! $this.get(0).attributes.length )
-					{
-						replaceElement( $this, 'p' );
-					}
-			    }).end()
-			   // bold
-			   .find('b').each(function(){
-					replaceElement($(this),'strong');
-			 	}).end()
-			   // italic
-			   .find('i').each(function(){
-					replaceElement($(this),'em');
-				}).end()
-			   // empty paragraphs
-			   .find('p:empty').remove();
+				 }).end()
+				//.find('[style]').each(function(){
+				//	var $this = $(this);
+				//	if ( $this.attr('style') ){}
+				// })
+				// divs that should be paragraphs
+				.children('div').each(function(){
+				 	var $this = $(this);
+				 	if ( ! $this.get(0).attributes.length )
+				 	{
+				 		replaceElement( $this, 'p' );
+				 	}
+				 }).end()
+				// bold
+				.find('b').each(function(){
+				 	replaceElement($(this),'strong');
+				 }).end()
+				// italic
+				.find('i').each(function(){
+				 	replaceElement($(this),'em');
+				 }).end()
+				// empty paragraphs
+				.find('p:empty').remove();
 		},
 		format: function( $el )
 		{
 			var
+			re_blocks = new RegExp( '<\/(' + WysiHat.Element.getBlocks().join('|') + ')>', 'g' ),
 			html = $el.html()
 						.replace( /<\/?[\w]+/g, function(tag){
 							return tag.toLowerCase();
@@ -66,10 +74,9 @@ WysiHat.Formatting = (function($){
 						//.replace('</div>','</p>')
 						.replace('<p>&nbsp;</p>','')
 						// Fancy formatting
-							.replace(/<\/(p|hr|pre|ul|ol|dl|div|h[1-6]|hgroup|address|blockquote|object|map|noscript|section|nav|article|aside|header|footer|video|audio|figure|figcaption|table|thead|tfoot|tbody|tr|form|fieldset|menu|canvas|details|embed)>/,'</$1>\n')
+						.replace( re_blocks,'</$1>\n' )
 						.replace(/\n+/,'\n')
 						.replace(/<p>\n+<\/p>/,'');
-			
 			$el.html( html );
 		},
 		getBrowserMarkupFrom: function( $el )
