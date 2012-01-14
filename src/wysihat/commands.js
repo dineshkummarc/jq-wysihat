@@ -361,7 +361,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	function isLinked()
 	{
 		// inside some sort of link
-		return selectionIsWithin('[href]');
+		return selectionIsWithin('a[href]');
 	}
 	
 
@@ -811,6 +811,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 		else
 		{
+			noSpans();
 			try {
 				WIN.document.execCommand(command, ui, value);
 			}
@@ -818,6 +819,37 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		}
 		$(DOC.activeElement).trigger( CHANGE_EVT );
 	}
+	/**
+	*  WysiHat.Commands#noSpans() -> undefined
+	*
+	*  Turns off span-based style application - redefines itself based on browser
+	**/
+	function noSpans()
+	{
+		try {
+			WIN.document.execCommand('styleWithCSS', 0, FALSE);
+			noSpans = function(){
+				WIN.document.execCommand('styleWithCSS', 0, FALSE);
+			};
+		} catch (e) {
+			try {
+		    	WIN.document.execCommand('useCSS', 0, TRUE);
+				noSpans = function(){
+			    	WIN.document.execCommand('useCSS', 0, TRUE);
+				};
+			} catch (e) {
+				try {
+					WIN.document.execCommand('styleWithCSS', FALSE, FALSE);
+					noSpans = function(){
+						WIN.document.execCommand('styleWithCSS', FALSE, FALSE);
+					};
+				}
+		        catch (e) {}
+			}
+		}
+	}
+	// define noSpans
+	noSpans();
 	/**
 	*  WysiHat.Commands#queryCommandState(state) -> Boolean
 	*  - state (String): bold, italic, underline, etc
@@ -979,6 +1011,27 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		return $els;
 	}
 	/**
+	*  WysiHat.Commands#getRanges() -> ranges
+	* 
+	*  Retrieves current ranges
+	**/
+	function getRanges()
+	{
+		var
+		selection	= WIN.getSelection(),
+		i			= selection.rangeCount,
+		ranges		= [],
+		range;
+		
+		while ( i-- )
+		{
+			range	= selection.getRangeAt( i );
+			ranges.push( range );
+		}
+		
+		return ranges;
+	}
+	/**
 	*  WysiHat.Commands#restoreRanges(ranges) -> undefined
 	*  - ranges (Array): an array of Range objects to be re-established
 	* 
@@ -1004,9 +1057,23 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 	**/
 	function selectionIsWithin( tagNames )
 	{
-		var selection = WIN.getSelection();
-		return !! ( $( selection.anchorNode ).closest( tagNames ).length ||
-					$( selection.focusNode ).closest( tagNames ).length );
+		var
+		sel	= WIN.getSelection(),
+		a	= sel.anchorNode,
+		b	= sel.focusNode;
+		while ( a.nodeType != 1 &&
+			 	b.nodeType != 1 )
+		{
+			if ( a.nodeType != 1 )
+			{
+				a = a.parentNode;
+			}
+			if ( b.nodeType != 1 )
+			{
+				b = b.parentNode;
+			}
+		}
+		return !! ( $(a).add(b).closest( tagNames ).length );
 	}
 	
 	
@@ -1058,6 +1125,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		stripFormattingElements:	stripFormattingElements,
 
 		execCommand:				execCommand,
+		noSpans:					noSpans,
 		queryCommandState:			queryCommandState,
 		getSelectedStyles:			getSelectedStyles,
 
@@ -1067,6 +1135,7 @@ WysiHat.Commands = (function( WIN, DOC, $ ){
 		getDefaultShortcut:			getDefaultShortcut,
 		manipulateSelection:		manipulateSelection,
 		getRangeElements:			getRangeElements,
+		getRanges:					getRanges,
 		restoreRanges:				restoreRanges,
 		selectionIsWithin:			selectionIsWithin,
 		
